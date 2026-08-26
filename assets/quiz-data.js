@@ -527,6 +527,216 @@ const QUESTION_BANK = {
             "correct": 1
           }
         ]
+      },
+      "trigonometry": {
+        "label": "Trigonometry",
+        "questions": [
+          {
+            "q": "In a right-angled triangle, which ratio is opposite/hypotenuse?",
+            "options": [
+              "Cosine",
+              "Sine",
+              "Tangent",
+              "Secant"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "In a right-angled triangle, which ratio is adjacent/hypotenuse?",
+            "options": [
+              "Cosine",
+              "Sine",
+              "Tangent",
+              "Cotangent"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "In a right-angled triangle, which ratio is opposite/adjacent?",
+            "options": [
+              "Cosine",
+              "Sine",
+              "Tangent",
+              "Cosecant"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is the value of sin(90&deg;)?",
+            "options": [
+              "0",
+              "0.5",
+              "1",
+              "Undefined"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is the value of cos(0&deg;)?",
+            "options": [
+              "0",
+              "0.5",
+              "1",
+              "-1"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "A right-angled triangle has an opposite side of 6 and hypotenuse of 10. Find sin of the angle.",
+            "options": [
+              "0.4",
+              "0.6",
+              "0.8",
+              "1.6"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which theorem finds a missing side in a right-angled triangle from the other two sides?",
+            "options": [
+              "Sine rule",
+              "Cosine rule",
+              "Pythagoras' theorem",
+              "Bayes' theorem"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "You know the opposite and hypotenuse of a right-angled triangle. Which ratio finds the angle?",
+            "options": [
+              "Sine",
+              "Cosine",
+              "Tangent",
+              "Pythagoras"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is the value of tan(45&deg;)?",
+            "options": [
+              "0",
+              "0.5",
+              "1",
+              "2"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "In SOHCAHTOA, what does 'CAH' represent?",
+            "options": [
+              "Sin = Opposite/Hypotenuse",
+              "Cos = Adjacent/Hypotenuse",
+              "Tan = Opposite/Adjacent",
+              "Cos = Opposite/Adjacent"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "sequences": {
+        "label": "Sequences",
+        "questions": [
+          {
+            "q": "Find the next term: 3, 7, 11, 15, ...?",
+            "options": [
+              "17",
+              "18",
+              "19",
+              "21"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What type of sequence has a constant difference between terms?",
+            "options": [
+              "Geometric",
+              "Arithmetic",
+              "Fibonacci",
+              "Quadratic"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Find the next term: 2, 6, 18, 54, ...?",
+            "options": [
+              "108",
+              "144",
+              "162",
+              "216"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What type of sequence has a constant ratio between terms?",
+            "options": [
+              "Arithmetic",
+              "Geometric",
+              "Triangular",
+              "Linear"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Find the nth term formula for 5, 8, 11, 14, ...?",
+            "options": [
+              "3n + 2",
+              "2n + 3",
+              "n + 5",
+              "3n − 2"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "Using the formula 3n + 2, find the 10th term.",
+            "options": [
+              "30",
+              "32",
+              "35",
+              "23"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Find the next two terms: 1, 1, 2, 3, 5, ...?",
+            "options": [
+              "6, 7",
+              "7, 9",
+              "8, 13",
+              "8, 11"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "Find the missing term: 4, 9, 16, 25, __, 49",
+            "options": [
+              "30",
+              "32",
+              "36",
+              "40"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is the common difference in 20, 15, 10, 5, ...?",
+            "options": [
+              "5",
+              "-5",
+              "4",
+              "-4"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Find the next term: 100, 50, 25, 12.5, ...?",
+            "options": [
+              "6.25",
+              "6",
+              "6.5",
+              "5"
+            ],
+            "correct": 0
+          }
+        ]
       }
     }
   },
@@ -948,6 +1158,216 @@ const QUESTION_BANK = {
               "Support your point with evidence from the text",
               "Ignore the text completely",
               "Write only one word"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "devices": {
+        "label": "Figurative Language & Literary Devices",
+        "questions": [
+          {
+            "q": "What is an example of a simile?",
+            "options": [
+              "The wind whispered",
+              "As brave as a lion",
+              "Time is a thief",
+              "Bang! Crash!"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is an example of a metaphor?",
+            "options": [
+              "As cold as ice",
+              "Like a shining star",
+              "Time is a thief",
+              "Quickly and quietly"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What literary device gives human qualities to non-human things?",
+            "options": [
+              "Simile",
+              "Metaphor",
+              "Personification",
+              "Alliteration"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is 'alliteration'?",
+            "options": [
+              "Repetition of the same consonant sound at the start of nearby words",
+              "A comparison using like or as",
+              "Giving human traits to objects",
+              "Exaggeration for effect"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is 'onomatopoeia'?",
+            "options": [
+              "A word that imitates the sound it describes",
+              "A type of rhyme",
+              "A repeated phrase",
+              "A type of question"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is 'hyperbole'?",
+            "options": [
+              "Understatement",
+              "Deliberate exaggeration for effect",
+              "A direct comparison",
+              "A sound-alike word"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Identify the device: 'I've told you a million times!'",
+            "options": [
+              "Simile",
+              "Hyperbole",
+              "Onomatopoeia",
+              "Alliteration"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is 'irony'?",
+            "options": [
+              "When the opposite of what's expected happens or is said",
+              "A type of rhyme",
+              "A repeated sound",
+              "A formal writing style"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is a 'symbol' in literature?",
+            "options": [
+              "An object or image representing a deeper meaning",
+              "A punctuation mark",
+              "A grammar rule",
+              "A type of sentence"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "Identify the device: 'The classroom was a zoo.'",
+            "options": [
+              "Simile",
+              "Metaphor",
+              "Onomatopoeia",
+              "Hyperbole"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "writing": {
+        "label": "Writing Skills",
+        "questions": [
+          {
+            "q": "What is the purpose of descriptive writing?",
+            "options": [
+              "To persuade the reader",
+              "To create a vivid picture using the senses",
+              "To argue a point",
+              "To give instructions"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the purpose of persuasive writing?",
+            "options": [
+              "To describe a scene",
+              "To convince the reader of a viewpoint",
+              "To tell a story",
+              "To list facts only"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What should a strong opening line of a story do?",
+            "options": [
+              "List all the characters",
+              "Hook the reader's interest immediately",
+              "Explain the ending",
+              "Use as many adjectives as possible"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is 'audience' in writing?",
+            "options": [
+              "The topic of the piece",
+              "The people the writing is intended for",
+              "The writer's name",
+              "The number of paragraphs"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is 'tone' in writing?",
+            "options": [
+              "The writer's attitude conveyed through word choice",
+              "The font used",
+              "The number of sentences",
+              "The title of the piece"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "In a narrative, what does 'structure' refer to?",
+            "options": [
+              "The spelling used",
+              "How the story is organised, e.g. beginning, middle, end",
+              "The characters' names",
+              "The page count"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is a 'topic sentence' used for in persuasive writing?",
+            "options": [
+              "To end the paragraph",
+              "To introduce the main point of the paragraph",
+              "To provide a definition",
+              "To ask a question"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which technique helps vary sentence structure in writing?",
+            "options": [
+              "Using only short sentences",
+              "Mixing short and long sentences for effect",
+              "Repeating the same sentence",
+              "Avoiding punctuation"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the purpose of a conclusion in persuasive writing?",
+            "options": [
+              "To introduce a new argument",
+              "To summarise and reinforce the main argument",
+              "To describe a setting",
+              "To ask unrelated questions"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What does 'show, don't tell' mean in descriptive writing?",
+            "options": [
+              "State facts directly without detail",
+              "Use sensory detail and action to convey feeling rather than stating it outright",
+              "Only use dialogue",
+              "Avoid describing emotions at all"
             ],
             "correct": 1
           }
@@ -1377,6 +1797,216 @@ const QUESTION_BANK = {
             "correct": 3
           }
         ]
+      },
+      "magnetism": {
+        "label": "Magnetism",
+        "questions": [
+          {
+            "q": "What are the two poles of a magnet called?",
+            "options": [
+              "Positive and negative",
+              "North and south",
+              "Up and down",
+              "Left and right"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Do like poles of a magnet attract or repel?",
+            "options": [
+              "Attract",
+              "Repel",
+              "Neither",
+              "Both"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Do opposite poles of a magnet attract or repel?",
+            "options": [
+              "Attract",
+              "Repel",
+              "Neither",
+              "Both"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is used to show the pattern of a magnetic field?",
+            "options": [
+              "Field lines",
+              "Sound waves",
+              "Light rays",
+              "Circuit diagrams"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What creates a magnetic field around a wire?",
+            "options": [
+              "A current flowing through it",
+              "The colour of the wire",
+              "The temperature of the wire",
+              "The length of the wire only"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is an electromagnet?",
+            "options": [
+              "A permanent magnet that never loses its field",
+              "A magnet created using an electric current, usually with a coil",
+              "A type of battery",
+              "A magnetic rock"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "How can you increase the strength of an electromagnet?",
+            "options": [
+              "Decrease the current",
+              "Add more coils/turns of wire",
+              "Remove the iron core",
+              "Use a shorter wire"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What material is commonly used as a core inside an electromagnet?",
+            "options": [
+              "Plastic",
+              "Iron",
+              "Rubber",
+              "Wood"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What happens to a compass needle near a strong magnet?",
+            "options": [
+              "It stays still",
+              "It aligns with the magnetic field",
+              "It melts",
+              "It spins randomly forever"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What do we call a magnetic material that keeps its magnetism after the field is removed?",
+            "options": [
+              "Temporary magnet",
+              "Permanent magnet",
+              "Electromagnet",
+              "Non-magnet"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "radioactivity": {
+        "label": "Radioactivity",
+        "questions": [
+          {
+            "q": "What is radioactive decay?",
+            "options": [
+              "When an atom's nucleus loses electrons only",
+              "When an unstable nucleus emits radiation to become more stable",
+              "When atoms combine to form molecules",
+              "When a substance melts"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Name the three main types of radioactive emission.",
+            "options": [
+              "Alpha, beta, gamma",
+              "Proton, neutron, electron",
+              "Solid, liquid, gas",
+              "Red, blue, green"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "Which emission is the most ionising but least penetrating?",
+            "options": [
+              "Alpha",
+              "Beta",
+              "Gamma",
+              "X-ray"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "Which emission is the most penetrating?",
+            "options": [
+              "Alpha",
+              "Beta",
+              "Gamma",
+              "None"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is an alpha particle made of?",
+            "options": [
+              "A single electron",
+              "Two protons and two neutrons",
+              "A photon of energy",
+              "A single neutron"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is a beta particle?",
+            "options": [
+              "A high-energy electron",
+              "A helium nucleus",
+              "A photon",
+              "A neutron"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is 'half-life'?",
+            "options": [
+              "The total lifespan of a radioactive source",
+              "The time for half the radioactive nuclei in a sample to decay",
+              "Half the mass of an atom",
+              "The time to fully charge a battery"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What can be used to block alpha radiation?",
+            "options": [
+              "A sheet of paper",
+              "Several centimetres of lead",
+              "Nothing can block it",
+              "Only water"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is needed to block gamma radiation effectively?",
+            "options": [
+              "A sheet of paper",
+              "A few cm of aluminium",
+              "Thick lead or concrete",
+              "A layer of skin"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is an isotope?",
+            "options": [
+              "An atom with a different number of protons",
+              "An atom of the same element with a different number of neutrons",
+              "A type of molecule",
+              "A radioactive compound only"
+            ],
+            "correct": 1
+          }
+        ]
       }
     }
   },
@@ -1802,6 +2432,216 @@ const QUESTION_BANK = {
             "correct": 2
           }
         ]
+      },
+      "periodic-table": {
+        "label": "The Periodic Table",
+        "questions": [
+          {
+            "q": "How are elements arranged in the modern periodic table?",
+            "options": [
+              "Alphabetically",
+              "By increasing atomic number",
+              "By colour",
+              "Randomly"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What do elements in the same group of the periodic table share?",
+            "options": [
+              "The same number of protons",
+              "The same number of outer electrons, giving similar properties",
+              "The same mass number",
+              "Nothing in common"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is Group 1 of the periodic table commonly known as?",
+            "options": [
+              "Noble gases",
+              "Alkali metals",
+              "Halogens",
+              "Transition metals"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is Group 7 of the periodic table commonly known as?",
+            "options": [
+              "Alkali metals",
+              "Noble gases",
+              "Halogens",
+              "Alkaline earth metals"
+            ],
+            "correct": 2
+          },
+          {
+            "q": "What is Group 0 (or Group 8) commonly known as?",
+            "options": [
+              "Halogens",
+              "Noble gases",
+              "Alkali metals",
+              "Transition metals"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "How does reactivity change going down Group 1 (alkali metals)?",
+            "options": [
+              "It decreases",
+              "It increases",
+              "It stays the same",
+              "It becomes zero"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "How does reactivity change going down Group 7 (halogens)?",
+            "options": [
+              "It increases",
+              "It decreases",
+              "It stays the same",
+              "It becomes negative"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Why are noble gases mostly unreactive?",
+            "options": [
+              "They have a full outer shell of electrons",
+              "They have no electrons",
+              "They are always liquids",
+              "They have no protons"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is a 'period' in the periodic table?",
+            "options": [
+              "A vertical column",
+              "A horizontal row",
+              "A type of bond",
+              "A measure of reactivity"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which part of the periodic table contains most metals?",
+            "options": [
+              "The far right",
+              "The top row only",
+              "The left and centre",
+              "Only Group 0"
+            ],
+            "correct": 2
+          }
+        ]
+      },
+      "rates": {
+        "label": "Rates of Reaction",
+        "questions": [
+          {
+            "q": "What happens to the rate of reaction when temperature increases?",
+            "options": [
+              "It decreases",
+              "It increases",
+              "It stays the same",
+              "It stops completely"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What happens to the rate of reaction when concentration increases?",
+            "options": [
+              "It decreases",
+              "It generally increases",
+              "It stays exactly the same",
+              "It becomes negative"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is a catalyst's role in a reaction?",
+            "options": [
+              "It slows the reaction down",
+              "It speeds up the reaction without being used up",
+              "It is a type of product",
+              "It stops the reaction permanently"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "How does increasing surface area of a solid affect reaction rate?",
+            "options": [
+              "It has no effect",
+              "It generally increases the rate",
+              "It always decreases the rate",
+              "It stops the reaction"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is 'collision theory'?",
+            "options": [
+              "Reactions only happen when particles collide with enough energy and correct orientation",
+              "A theory about planetary motion",
+              "A rule about ionic bonding",
+              "A law about gas pressure only"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What is 'activation energy'?",
+            "options": [
+              "The total energy released in a reaction",
+              "The minimum energy needed for a reaction to occur",
+              "The energy of the products only",
+              "The energy stored in a catalyst"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What would generally speed up a reaction between a solid and a liquid?",
+            "options": [
+              "Cooling the mixture down",
+              "Increasing the surface area of the solid",
+              "Removing the liquid",
+              "Using bigger lumps of solid"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "How can you measure the rate of a reaction that produces gas?",
+            "options": [
+              "By measuring the volume of gas produced over time",
+              "By weighing the reactants before the reaction only",
+              "By checking the colour of the container",
+              "By counting bubbles in the sky"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "What effect does a catalyst have on activation energy?",
+            "options": [
+              "It increases it",
+              "It lowers it",
+              "It has no effect on it",
+              "It doubles it"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Why does powdered chalk react faster with acid than one lump of the same mass?",
+            "options": [
+              "Powdered chalk has a smaller total surface area",
+              "Powdered chalk has a larger total surface area, so more collisions can occur",
+              "Powder is a different chemical",
+              "Lumps are more reactive"
+            ],
+            "correct": 1
+          }
+        ]
       }
     }
   },
@@ -2223,6 +3063,216 @@ const QUESTION_BANK = {
               "Lost as heat through respiration",
               "Converted into water",
               "Never lost"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "body-systems": {
+        "label": "Human Body Systems",
+        "questions": [
+          {
+            "q": "Which organ pumps blood around the body?",
+            "options": [
+              "Lungs",
+              "Heart",
+              "Liver",
+              "Kidney"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which system carries oxygen and nutrients around the body?",
+            "options": [
+              "Digestive system",
+              "Circulatory system",
+              "Nervous system",
+              "Skeletal system"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which organ is mainly responsible for gas exchange in the body?",
+            "options": [
+              "Heart",
+              "Lungs",
+              "Stomach",
+              "Liver"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the main function of the digestive system?",
+            "options": [
+              "To pump blood",
+              "To break down food into nutrients the body can absorb",
+              "To send electrical signals",
+              "To filter air"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which organ produces insulin to help regulate blood sugar?",
+            "options": [
+              "Liver",
+              "Pancreas",
+              "Kidney",
+              "Stomach"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the function of red blood cells?",
+            "options": [
+              "Fight infection",
+              "Carry oxygen around the body",
+              "Clot blood",
+              "Digest food"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the function of white blood cells?",
+            "options": [
+              "Carry oxygen",
+              "Help fight infection",
+              "Clot wounds",
+              "Digest fats"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which organs filter waste from the blood to produce urine?",
+            "options": [
+              "Lungs",
+              "Kidneys",
+              "Liver",
+              "Heart"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the role of the trachea (windpipe)?",
+            "options": [
+              "To pump blood",
+              "To carry air to and from the lungs",
+              "To digest food",
+              "To produce hormones"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which part of the nervous system processes information and controls the body?",
+            "options": [
+              "The spinal cord only",
+              "The brain",
+              "The skin",
+              "The heart"
+            ],
+            "correct": 1
+          }
+        ]
+      },
+      "health": {
+        "label": "Health & Disease",
+        "questions": [
+          {
+            "q": "What is a pathogen?",
+            "options": [
+              "A helpful bacterium",
+              "A microorganism that causes disease",
+              "A type of white blood cell",
+              "A healthy body cell"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Name a type of pathogen.",
+            "options": [
+              "Bacteria",
+              "Bone",
+              "Blood cell",
+              "Enzyme"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "How do vaccines help protect against disease?",
+            "options": [
+              "They cure any illness instantly",
+              "They expose the body to a safe form of a pathogen so the immune system learns to fight it",
+              "They replace white blood cells",
+              "They remove the need for a healthy diet"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the role of white blood cells in fighting infection?",
+            "options": [
+              "They carry oxygen",
+              "They identify and destroy pathogens",
+              "They digest food",
+              "They transport nutrients only"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is an 'antibody'?",
+            "options": [
+              "A protein produced by the immune system to fight a specific pathogen",
+              "A type of pathogen",
+              "A digestive enzyme",
+              "A blood vessel"
+            ],
+            "correct": 0
+          },
+          {
+            "q": "How can infectious diseases commonly spread between people?",
+            "options": [
+              "Only through direct blood transfusion",
+              "Through the air, contact, or contaminated water/food",
+              "They cannot spread between people",
+              "Only through sunlight"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is a non-communicable disease?",
+            "options": [
+              "A disease that can spread between people",
+              "A disease that cannot be passed from person to person, e.g. heart disease",
+              "A type of pathogen",
+              "A vaccine"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Which lifestyle factor is most linked to increased risk of heart disease?",
+            "options": [
+              "Regular exercise",
+              "A diet high in saturated fat",
+              "Drinking water",
+              "Sleeping well"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "What is the purpose of antibiotics?",
+            "options": [
+              "To treat viral infections like colds",
+              "To treat bacterial infections",
+              "To replace vaccines",
+              "To cause disease"
+            ],
+            "correct": 1
+          },
+          {
+            "q": "Why don't antibiotics work against viruses?",
+            "options": [
+              "Viruses are too large",
+              "Viruses lack the cell structures/processes antibiotics target, and reproduce inside host cells",
+              "Antibiotics only work on plants",
+              "Viruses are immune to all chemicals"
             ],
             "correct": 1
           }
@@ -3080,4 +4130,4 @@ const QUESTION_BANK = {
       }
     }
   }
-};
+}
