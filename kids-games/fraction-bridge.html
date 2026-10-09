@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fractions (Fraction Bridge) | BrainyEdHub</title>
+<style>
+:root{--navy:#0D2B52;--orange:#F2701C;--sky:#BFE6FA;--paper:#FFF8EE}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--navy);color:#fff;font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100%}
+#top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;flex-wrap:wrap}
+#top h1{margin:0;font-size:1.1rem}
+#top small{opacity:.8}
+#stage{position:relative;flex:1;min-height:0}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#msg{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:min(94%,560px);background:var(--paper);color:var(--navy);border-radius:14px;padding:10px 14px;font-size:.95rem;line-height:1.35;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#sum{position:absolute;left:10px;bottom:10px;background:rgba(13,43,82,.88);border-radius:10px;padding:7px 11px;font-size:.9rem;line-height:1.4;max-width:92%}
+#ctrl{background:var(--paper);color:var(--navy);padding:10px 10px 12px}
+#tray{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:9px}
+.pk{height:46px;border:3px solid var(--navy);border-radius:10px;color:#fff;font:700 .78rem 'Trebuchet MS',sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.5);cursor:pointer;padding:0}
+#btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.b{border:0;border-radius:10px;padding:10px 16px;font:700 .95rem 'Trebuchet MS',sans-serif;cursor:pointer;background:var(--navy);color:#fff}
+.b.go{background:var(--orange)}
+.b:disabled{opacity:.4;cursor:default}
+.b:focus-visible,.pk:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.hide{display:none}
+#intro{position:absolute;inset:0;background:rgba(13,43,82,.82);display:flex;align-items:center;justify-content:center;z-index:5}
+#intro.hide{display:none}
+#over{position:absolute;inset:0;background:rgba(13,43,82,.82);display:flex;align-items:center;justify-content:center;z-index:5}#over.hide{display:none}#over .b{margin:4px}
+.card{background:var(--paper);color:var(--navy);border-radius:16px;padding:20px;width:min(90%,340px);text-align:center}
+.card h2{margin:0 0 6px;font-size:1.2rem}.card p{margin:0 0 12px}
+#nm{width:100%;padding:10px;border:3px solid var(--navy);border-radius:10px;font:700 1rem 'Trebuchet MS',sans-serif;margin-bottom:12px;text-align:center}
+#menu,#lesson,#done,#cert,#pick{position:absolute;inset:0;background:rgba(13,43,82,.82);display:flex;align-items:center;justify-content:center;z-index:5}#menu.hide,#lesson.hide,#done.hide,#cert.hide,#pick.hide{display:none}.dif{display:block;width:100%;margin:8px 0;text-align:left}.card p{line-height:1.4}.card{max-height:92%;overflow:auto}
+#bar{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;width:min(94%,560px);height:34px;background:rgba(255,255,255,.18);border:2px solid #fff;border-radius:8px;overflow:hidden}#bar.hide{display:none}
+#bar i{position:absolute;top:0;bottom:0;border-right:2px solid #fff;color:#fff;font:700 .75rem 'Trebuchet MS',sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.5);font-style:normal}
+#bar b{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.45)}#sum.up{bottom:56px}
+.pk.glow{animation:gl .6s infinite alternate}@keyframes gl{from{box-shadow:0 0 0 0 #FFC400}to{box-shadow:0 0 0 6px #FFC400}}
+.cb{border:3px solid transparent;border-radius:12px;background:#fff;padding:4px;cursor:pointer}.cb.on{border-color:var(--orange);background:#FFE9D6}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top"><h1>Fractions (Fraction Bridge)</h1><small id="lv"></small><span id="hp" aria-label="Lives" style="font-size:1.25rem;letter-spacing:2px"></span><button class="b" id="lvb" style="padding:4px 10px;font-size:.8rem">Levels</button><button class="b" id="rn" style="padding:4px 10px;font-size:.8rem">Switch player</button><small>BrainyEdHub &middot; A Hub for Smarter Education</small></div>
+  <div id="stage"><canvas id="c"></canvas><div id="msg"></div><div id="sum"></div><div id="bar" class="hide"></div>
+<div id="intro"><div class="card"><h2>Who is playing?</h2><p>Tap your name, or type a new name for your character.</p><div id="pl"></div><input id="nm" maxlength="12" placeholder="Type a name" autocomplete="off"><button class="b go" id="st">Start building</button></div></div>
+<div id="over" class="hide"><div class="card"><h2>Game over</h2><p id="ovp"></p><button class="b go" id="again">Try this level again</button><button class="b" id="restart">Start from level 1</button></div></div>
+<div id="menu" class="hide"><div class="card"><h2 id="mh">Choose a level</h2><p>Each level teaches one fraction idea.</p><div id="dl"></div></div></div>
+<div id="pick" class="hide"><div class="card"><h2>Choose your character</h2><p id="pn"></p><div id="pg" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div><button class="b go" id="pgo">Start</button></div></div>
+<div id="done" class="hide"><div class="card"><h2 id="dt"></h2><p id="ds"></p><p id="dm" style="font-size:.9rem;text-align:left"></p><div id="db"></div></div></div>
+<div id="cert" class="hide"><div class="card" style="width:min(96%,520px)"><canvas id="cc" width="1200" height="850" style="width:100%;border-radius:8px"></canvas><div style="margin-top:10px"><a class="b go" id="cd" download="certificate.png" style="display:inline-block;text-decoration:none">Download certificate</a> <button class="b" id="cx">Close</button></div></div></div>
+<div id="lesson" class="hide"><div class="card"><h2 id="lt"></h2><p id="lg"></p><p id="lh" style="font-size:.85rem;opacity:.75"></p><button class="b go" id="lgo">Let's go</button></div></div></div>
+  <div id="ctrl">
+    <div id="tray" aria-label="Planks"></div>
+    <div id="btns">
+      <button class="b" id="undo">Undo</button>
+      <button class="b" id="clear">Clear</button>
+      <button class="b" id="hint">Hint</button><button class="b" id="barb">Fraction bar</button><button class="b" id="snd">Sound on</button><button class="b go" id="go">Walk across</button>
+      <button class="b go hide" id="next">Next level</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// All lengths are counted in 24ths of a whole, so every fraction stays exact.
+const U=0.5,COL={2:'#F2701C',3:'#2E9BD6',4:'#8E5CD6',6:'#2EB872',8:'#D9A400',12:'#E0457B'};
+const gcd=(a,b)=>b?gcd(b,a%b):a,lcm=(a,b)=>a*b/gcd(a,b);
+const frac=u=>{if(!u)return'0';const g=gcd(u,24),n=u/g,d=24/g;return d===1?'1 whole':n+'/'+d};
+const $=id=>document.getElementById(id);
+const P=s=>{const[n,d]=s.split('/').map(Number);return{n,d,u:24*n/d,lab:s}};
+const F=(t,g,gap,pl,tip)=>({type:'fill',t,g,gap:P(gap).u,pl:pl.map(P),tip});
+const Mt=(t,g,rs,tip)=>({type:'match',t,g,rounds:rs.map(([a,o])=>({tgt:P(a),pl:o.map(P)})),tip});
+const TIERS={
+ easy:{name:'Easy',sub:'Grades 3-4',lives:5,lv:[
+  F('Build a whole','Fractions with the same bottom number are easy to add. 1/4 + 1/4 + 1/2 = 1 whole.','1/1',['1/2','1/4'],'Two 1/4 planks are exactly as long as one 1/2 plank.'),
+  F('Quarters only','Only quarters measure quarters. A plank with a different bottom number, like 1/3, will not fit.','3/4',['1/4','2/4','1/3'],'3/4 = 1/4 + 1/4 + 1/4, or 1/4 + 2/4. Thirds never fit into quarters.'),
+  Mt('Same length, different name','Equivalent fractions have different names but the same length. Find the plank equal to the gap.',[['1/2',['2/4','1/4','3/4','1/3']],['1/3',['2/6','1/6','1/2','2/3']],['3/4',['6/8','1/2','2/3','4/8']]],'1/2 = 2/4, 1/3 = 2/6 and 3/4 = 6/8. Multiply the top and bottom by the same number!'),
+  F('Thirds and sixths','Thirds and sixths fit together because 1/3 = 2/6. Quarters do not belong here.','1/1',['1/3','1/6','1/4'],'1 whole = 1/3 + 1/3 + 1/3, and every 1/3 is the same as 2/6.'),
+  Mt('Equal fractions again','Find the plank that matches the gap. Wrong ones are shorter or longer.',[['2/3',['4/6','3/6','2/6','4/4']],['1/2',['4/8','3/8','5/8','1/4']],['3/4',['9/12','6/12','3/12','8/12']]],'4/6 = 2/3, 4/8 = 1/2 and 9/12 = 3/4.'),
+  F('Eighths make a whole','The top number counts the pieces. Eight 1/8 pieces make 1 whole, and bigger pieces work too.','1/1',['1/8','2/8','4/8'],'1 whole = 8/8 = 4/8 + 4/8.'),
+  Mt('Halves in disguise','Many fractions are secretly 1/2: the top number is half of the bottom number.',[['1/2',['3/6','2/6','4/6','3/8']],['1/2',['6/12','5/12','7/12','2/3']],['1/2',['4/8','3/8','5/8','1/3']]],'3/6, 6/12 and 4/8 are all 1/2. The top is half of the bottom.'),
+  F('Add the tops','With the same bottom number, just add the top numbers: 1/6 + 2/6 = 3/6.','5/6',['1/6','2/6','3/6'],'5/6 = 1/6 + 2/6 + 2/6, or 2/6 + 3/6. Add the tops, keep the bottom.'),
+  Mt('Smaller pieces','Cutting each piece in half doubles the pieces but keeps the same length.',[['1/4',['2/8','1/8','3/8','2/4']],['1/6',['2/12','1/12','3/12','1/3']],['1/2',['4/8','3/8','1/4','2/3']]],'1/4 = 2/8, 1/6 = 2/12 and 1/2 = 4/8.'),
+  F('Boss level: Easy','Use everything you learned. Same bottom numbers add, and equal fractions can swap.','1/1',['1/2','2/4','1/4','1/3'],'1 whole = 1/2 + 2/4, or 1/3 + 1/3 + 1/3. Thirds only fit with thirds.')]},
+ med:{name:'Medium',sub:'Grades 4-5',lives:4,lv:[
+  F('Halves, thirds, quarters','Fractions with different bottom numbers do not always fit together. Plan ahead so no gap is left over.','1/1',['1/2','1/3','1/4'],'1/2 + 1/3 = 5/6 leaves 1/6, a hole no plank can fill. Thirds go with thirds!'),
+  F('Three-quarters','Try different mixes to make 3/4 exactly.','3/4',['1/3','1/4','1/6'],'3/4 = 1/4 + 1/4 + 1/4, and also 1/3 + 1/6 + 1/4.'),
+  Mt('Twelfths','Twelfths give many equal names. Find the plank equal to the gap.',[['2/3',['8/12','6/12','3/4','4/8']],['5/6',['10/12','8/12','9/12','5/12']],['1/4',['3/12','2/12','1/3','2/6']]],'8/12 = 2/3, 10/12 = 5/6 and 3/12 = 1/4.'),
+  F('Five-sixths','Sixths, thirds and quarters: which mixes work?','5/6',['1/3','1/4','1/6'],'5/6 = 1/3 + 1/3 + 1/6, and also 1/4 + 1/4 + 1/3.'),
+  F('Eighths','Eighths fit with halves because 1/2 = 4/8. Thirds do not fit with eighths.','1/1',['1/2','1/3','1/8'],'1 whole = 1/2 + 4/8, or 8/8. Different bottom numbers need a shared size.'),
+  Mt('Simplest form','The gap is not in its simplest form. Divide the top and bottom by the same number to find the match.',[['6/8',['3/4','2/3','1/2','5/6']],['4/12',['1/3','1/4','1/2','2/3']],['8/12',['2/3','3/4','1/3','5/6']]],'6/8 = 3/4, 4/12 = 1/3 and 8/12 = 2/3.'),
+  F('Thirds and twelfths','Twelfths fit with thirds and quarters because 12 is in the 3 and 4 times tables.','2/3',['1/3','1/4','1/12'],'2/3 = 8/12. Twelfths fit with thirds and quarters.'),
+  F('Seven-twelfths','Which mix of planks makes 7/12 exactly?','7/12',['1/4','1/3','1/6','1/2'],'7/12 = 1/4 + 1/3. A half leaves 1/12, and nothing is that small.'),
+  Mt('More than one match','Sometimes two planks are both correct. Pick any one that matches.',[['3/4',['6/8','9/12','2/3','5/6']],['1/3',['4/12','2/6','1/4','2/3']],['2/3',['8/12','4/6','1/2','3/4']]],'6/8 = 9/12 = 3/4. A fraction has many names.'),
+  F('Boss level: Medium','Make 5/8 with halves, quarters, eighths and thirds. One of them is a trap.','5/8',['1/2','1/4','1/8','1/3'],'5/8 = 1/2 + 1/8, or 1/4 + 1/4 + 1/8. Thirds do not fit with eighths.')]},
+ hard:{name:'Hard',sub:'Grades 5-6',lives:3,lv:[
+  F('Seven-eighths','Use halves, quarters and eighths. A third will not fit anywhere.','7/8',['1/2','1/4','1/8','1/3'],'7/8 = 1/2 + 1/4 + 1/8. Thirds never fit into eighths.'),
+  Mt('Spot the equal fraction','Bigger bottom numbers are harder. Find the plank equal to the gap.',[['3/4',['9/12','5/6','2/3','7/8']],['5/6',['10/12','3/4','7/8','4/6']],['7/12',['14/24','7/8','1/2','8/12']]],'9/12 = 3/4, 10/12 = 5/6 and 14/24 = 7/12.'),
+  F('More than a whole','Fractions can be bigger than 1 whole. 5/4 means 1 whole and 1/4 more.','5/4',['3/4','1/2','1/3','1/6'],'5/4 = 3/4 + 1/2, and also 3/4 + 1/3 + 1/6.'),
+  F('Eleven-twelfths','Which mix of planks makes 11/12 exactly?','11/12',['1/2','1/3','1/4'],'11/12 = 1/3 + 1/3 + 1/4. Only one mix works!'),
+  F('Mixed pieces','Combine three-quarters, thirds and eighths to make 1 whole.','1/1',['3/4','1/3','1/8'],'1 whole = 3/4 + 1/8 + 1/8, or 1/3 + 1/3 + 1/3.'),
+  Mt('Big bottom numbers','Twenty-fourths are tiny pieces. Find the plank equal to the gap.',[['5/12',['10/24','5/6','3/8','1/2']],['3/8',['9/24','1/3','1/2','5/12']],['7/8',['21/24','5/6','3/4','11/12']]],'10/24 = 5/12, 9/24 = 3/8 and 21/24 = 7/8.'),
+  F('Nine-eighths','9/8 is more than a whole: 1 whole and 1/8 more.','9/8',['1/2','3/4','1/8','1/3'],'9/8 = 3/4 + 1/8 + 1/8 + 1/8, or 1/2 + 1/2 + 1/8.'),
+  F('Thirteen-twelfths','Make more than a whole with halves, thirds, quarters and sixths.','13/12',['1/2','1/3','1/4','1/6'],'13/12 = 1/2 + 1/3 + 1/4. Twelfths are the shared size.'),
+  Mt('Mixed numbers','Fractions bigger than 1 can have many names. Find a plank equal to the gap.',[['5/4',['10/8','9/8','7/6','4/3']],['3/2',['9/6','6/4','5/4','8/6']],['4/3',['8/6','5/4','3/2','7/6']]],'5/4 = 10/8, 3/2 = 9/6 = 6/4 and 4/3 = 8/6.'),
+  F('Boss level: Hard','Final challenge! Make 17/12, which is 1 whole and 5/12 more.','17/12',['1/2','1/3','1/4','3/4'],'17/12 = 3/4 + 1/3 + 1/3, or 1/2 + 1/3 + 1/3 + 1/4.')]}
+};
+function eq(a,b){const l=lcm(a.d,b.d);return a.lab+' = '+a.n*l/a.d+'/'+l+' and '+b.lab+' = '+b.n*l/b.d+'/'+l}
+let AC=null,AOUT=null,SA=null,mute=false;try{mute=localStorage.getItem('beMute')==='1'}catch(e){}
+function ac(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();AOUT=AC.createGain();AOUT.gain.value=.8;const cp=AC.createDynamicsCompressor();cp.threshold.value=-12;cp.knee.value=0;cp.ratio.value=20;cp.attack.value=.002;cp.release.value=.1;AOUT.connect(cp);cp.connect(AC.destination)}catch(e){AC=null}
+   try{navigator.audioSession.type='playback'}catch(e){}
+   try{SA=new Audio('data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUAGAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA');SA.loop=true;SA.play().catch(()=>{})}catch(e){}}
+  if(AC&&AC.state!=='running')AC.resume();return AC}
+function env(g,t,a,d,v){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
+function tone(f,t0,d,type,v,f2){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+d);env(g,t0,.005,d,v);o.connect(g);g.connect(AOUT);o.start(t0);o.stop(t0+d+.05)}
+function hiss(t0,d,type,f,q,v,f2){const n=Math.ceil(AC.sampleRate*(d+.1)),b=AC.createBuffer(1,n,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=Math.random()*2-1;
+ const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;fl.type=type;fl.frequency.setValueAtTime(f,t0);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t0+d);fl.Q.value=q;env(g,t0,.004,d,v);s.connect(fl);fl.connect(g);g.connect(AOUT);s.start(t0);s.stop(t0+d+.1)}
+const SFX={
+ place(t){tone(420,t,.12,'triangle',.7,160);tone(190,t,.18,'sine',.6,70);hiss(t,.08,'bandpass',1400,1.2,.6);hiss(t,.12,'lowpass',700,.7,.5)},
+ step(t){hiss(t,.09,'lowpass',900,.8,.7);tone(220,t,.07,'triangle',.35,110)},
+ crack(t){for(let i=0;i<4;i++)hiss(t+i*.045,.05,'highpass',1800+i*400,.9,.4);tone(140,t,.25,'sawtooth',.25,50)},
+ splash(t){hiss(t,.7,'lowpass',3500,.6,.6,350);hiss(t+.05,.4,'bandpass',1800,.8,.4,600);tone(120,t,.3,'sine',.4,60)},
+ ding(t){[880,1320,1760].forEach((f,i)=>tone(f,t+i*.05,.6,'sine',.3/(i+1)))},
+ win(t){[523,659,784,1047,1319].forEach((f,i)=>{tone(f,t+i*.11,.5,'triangle',.4);tone(f*2,t+i*.11,.3,'sine',.12)});hiss(t+.5,.9,'highpass',4000,.7,.25)},
+ lose(t){[392,330,262].forEach((f,i)=>tone(f,t+i*.2,.45,'triangle',.35,f*.97))},
+ heart(t){tone(160,t,.35,'sawtooth',.25,90)},
+ click(t){tone(660,t,.06,'square',.12)},
+ hint(t){tone(988,t,.15,'sine',.3);tone(1319,t+.12,.25,'sine',.3)}
+};
+function sfx(n){if(mute||!ac())return;try{SFX[n](AC.currentTime+.01)}catch(e){}}
+function why(a,b){return a.lab+' is '+(a.u<b.u?'shorter':'longer')+' than '+b.lab+'. Compare: '+eq(a,b)+'.'}
+
+// ---------- scene ----------
+const stage=$('stage'),cv=$('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio||1,2));
+const scene=new THREE.Scene();scene.background=new THREE.Color('#BFE6FA');
+const cam=new THREE.PerspectiveCamera(50,1,.1,100);
+scene.add(new THREE.HemisphereLight(0xffffff,0x88aa88,.95));
+const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(5,10,7);scene.add(sun);
+const M=c=>new THREE.MeshLambertMaterial({color:c});
+
+function cliff(){
+  const g=new THREE.Group();
+  const rock=new THREE.Mesh(new THREE.BoxGeometry(8,3,5),M('#9A7B5B'));rock.position.y=-1.65;
+  const top=new THREE.Mesh(new THREE.BoxGeometry(8,.15,5),M('#5BBF5B'));top.position.y=-.075;
+  g.add(rock,top);return g;
+}
+const cL=cliff(),cR=cliff();scene.add(cL,cR);
+// tree on left cliff
+const tree=new THREE.Group();
+const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.15,.7,8),M('#7A5230'));trunk.position.y=.35;
+const crown=new THREE.Mesh(new THREE.ConeGeometry(.6,1.4,10),M('#2E8B57'));crown.position.y=1.3;
+tree.add(trunk,crown);tree.position.set(-2.8,0,-1);cL.add(tree);
+// goal flag on right cliff
+const flag=new THREE.Group();
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,2,6),M('#ffffff'));pole.position.y=1;
+const cloth=new THREE.Mesh(new THREE.PlaneGeometry(.8,.5),new THREE.MeshLambertMaterial({color:'#F2701C',side:THREE.DoubleSide}));cloth.position.set(.4,1.7,0);
+flag.add(pole,cloth);flag.position.set(2.2,0,0);cR.add(flag);
+const water=new THREE.Mesh(new THREE.PlaneGeometry(60,16),new THREE.MeshLambertMaterial({color:'#2E9BD6',transparent:true,opacity:.88}));
+water.rotation.x=-Math.PI/2;water.position.y=-1.6;scene.add(water);
+
+// hero: bold cartoon builder with thick outlines
+const hero=new THREE.Group(),inner=new THREE.Group();hero.add(inner);hero.scale.setScalar(1.5);
+const OUT=new THREE.MeshBasicMaterial({color:'#0A1A33',side:THREE.BackSide});
+const part=(g,c,x,y,z)=>{const m=new THREE.Mesh(g,M(c));m.position.set(x,y,z);const o=new THREE.Mesh(g,OUT);o.scale.setScalar(1.14);m.add(o);return m};
+function limb(x,y,len,r,c,tip,tc){const p=new THREE.Group();p.position.set(x,y,0);p.add(part(new THREE.CylinderGeometry(r,r*.9,len,10),c,0,-len/2,0));p.add(part(tip,tc,0,-len,tip.parameters.depth?.05:0));inner.add(p);return p}
+const legL=limb(-.14,.55,.5,.09,'#0D2B52',new THREE.BoxGeometry(.2,.1,.3),'#ffffff');
+const legR=limb(.14,.55,.5,.09,'#0D2B52',new THREE.BoxGeometry(.2,.1,.3),'#ffffff');
+const armL=limb(-.34,1.05,.45,.07,'#F2701C',new THREE.SphereGeometry(.09,12,10),'#F5C9A0');
+const armR=limb(.34,1.05,.45,.07,'#F2701C',new THREE.SphereGeometry(.09,12,10),'#F5C9A0');
+inner.add(part(new THREE.CylinderGeometry(.26,.21,.62,16),'#F2701C',0,.84,0));
+inner.add(part(new THREE.CylinderGeometry(.215,.215,.07,16),'#0D2B52',0,.58,0));
+inner.add(part(new THREE.SphereGeometry(.26,20,16),'#F5C9A0',0,1.42,0));
+inner.add(part(new THREE.SphereGeometry(.3,20,12,0,Math.PI*2,0,Math.PI*.5),'#FFC400',0,1.55,0));
+inner.add(part(new THREE.CylinderGeometry(.34,.34,.04,22),'#FFC400',0,1.56,0));
+[-.1,.1].forEach((x,i)=>{inner.add(part(new THREE.SphereGeometry(.06,12,10),'#ffffff',x,1.43,.225));inner.add(part(new THREE.SphereGeometry(.035,10,8),'#111',x,1.43,.258));
+ const br=part(new THREE.BoxGeometry(.11,.025,.03),'#3B2314',x,1.52,.24);br.rotation.z=i?-.2:.2;inner.add(br)});
+inner.add(part(new THREE.SphereGeometry(.035,8,8),'#E59A6E',0,1.38,.255));
+const sm=part(new THREE.TorusGeometry(.09,.017,6,14,Math.PI),'#7A1F1F',0,1.36,.24);sm.rotation.z=Math.PI;inner.add(sm);
+scene.add(hero);
+const CH=[{s:'#FFE0BD',sh:'#F2701C',h:'#FFC400'},{s:'#F1C27D',sh:'#2E9BD6',h:'#FFC400'},{s:'#E0AC69',sh:'#2EB872',h:'#F2701C'},{s:'#C68642',sh:'#8E5CD6',h:'#FFC400'},{s:'#A9693C',sh:'#E0457B',h:'#2E9BD6'},{s:'#8D5524',sh:'#F2701C',h:'#2EB872'},{s:'#6B4226',sh:'#2E9BD6',h:'#F2701C'},{s:'#4A2C17',sh:'#FFC400',h:'#8E5CD6'}];
+const ROLES={f5c9a0:'skin',f2701c:'shirt',ffc400:'hat',e59a6e:'nose'};
+hero.traverse(o=>{if(o.isMesh&&o.material&&o.material.color){const r=ROLES[o.material.color.getHexString()];if(r)o.userData.r=r}});
+function look(i){const c=CH[i]||CH[0];hero.traverse(o=>{const r=o.userData.r;if(!r)return;o.material.color.set(r==='skin'?c.s:r==='shirt'?c.sh:r==='hat'?c.h:c.s);if(r==='nose')o.material.color.multiplyScalar(.82)})}
+let tag=null,name='';const who=()=>name||'your builder';
+function setName(n){name=n;if(tag){hero.remove(tag);tag.material.map.dispose();tag.material.dispose()}
+ const k=document.createElement('canvas');k.width=256;k.height=72;const x=k.getContext('2d');x.fillStyle='rgba(255,248,238,.95)';x.beginPath();if(x.roundRect)x.roundRect(4,4,248,64,20);else x.rect(4,4,248,64);x.fill();
+ x.fillStyle='#0D2B52';x.font='bold 40px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(n,128,38);
+ tag=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(k),depthTest:false}));tag.scale.set(1.3,.37,1);tag.position.y=2.0;hero.add(tag)}
+function pose(m,t){
+  inner.position.y=0;inner.rotation.z=0;inner.scale.y=1;armL.rotation.set(0,0,0);armR.rotation.set(0,0,0);legL.rotation.x=legR.rotation.x=0;
+  if(m==='walk'){const p=t*8,s=Math.sin(p);legL.rotation.x=s*.65;legR.rotation.x=-s*.65;armL.rotation.x=-s*.7;armR.rotation.x=s*.7;inner.position.y=Math.abs(Math.cos(p))*.07;inner.rotation.z=s*.04}
+  else if(m==='fall'){const s=Math.sin(t*16);legL.rotation.x=s*.8;legR.rotation.x=-s*.8;armL.rotation.z=-2.4+s*.3;armR.rotation.z=2.4-s*.3}
+  else if(m==='cheer'){const s=Math.sin(t*10)*.2;armL.rotation.z=-2.6+s;armR.rotation.z=2.6-s}
+  else{armL.rotation.z=-.08;armR.rotation.z=.08;inner.scale.y=1+Math.sin(t*2)*.012}
+}
+
+// ---------- game state ----------
+let tier='easy',T=TIERS.easy,lvl=0,L,GAP=24,gapW=12,planks=[],used=0,st='build',tgtX=0,vy=0,ghost=null,th=0,D=14,rd=0,cur=[];
+let lives=3,memo={},crash=[],bits=[];
+let miss=[],hints=0,bad=null,lastSg=false,PR={},MISS={};
+const stars=(k,i)=>(PR[k]||[])[i]||0,ST=n=>'\u2605'.repeat(n)+'\u2606'.repeat(3-n);
+const pk=(n,w)=>w+':'+n.toLowerCase();
+function loadP(n){try{PR=JSON.parse(localStorage.getItem(pk(n,'beProg'))||'{}');MISS=JSON.parse(localStorage.getItem(pk(n,'beMiss'))||'{}')}catch(e){PR={};MISS={}}}
+function sv(){try{localStorage.setItem(pk(name,'beProg'),JSON.stringify(PR));localStorage.setItem(pk(name,'beMiss'),JSON.stringify(MISS))}catch(e){}}
+const profiles=()=>{try{return JSON.parse(localStorage.getItem('beProfiles')||'[]')}catch(e){return[]}};
+function rec(p,w){miss.push({lab:p.lab,w});MISS[p.lab]=(MISS[p.lab]||0)+1;sv();return w}
+let barOn=true;try{barOn=localStorage.getItem('beBar')!=='0'}catch(e){}
+function drawBar(){
+  const b=$('bar');b.classList.toggle('hide',!barOn);$('sum').classList.toggle('up',barOn);if(!barOn)return;
+  const g=cur.reduce((a,p)=>gcd(a,p.u),GAP);let h='',c=0;
+  for(let x=g;x<GAP;x+=g)h+='<b style="left:'+x/GAP*100+'%"></b>';
+  planks.forEach(x=>{h+='<i style="left:'+c/GAP*100+'%;width:'+x.p.u/GAP*100+'%;background:'+(COL[x.p.d]||'#607D8B')+'">'+x.p.lab+'</i>';c+=x.p.u});
+  if(bad)h+='<i style="left:'+c/GAP*100+'%;width:'+Math.min(bad.u,GAP-c)/GAP*100+'%;background:#c00000">'+bad.lab+'</i>';
+  b.innerHTML=h}
+const POOL=[];[2,3,4,6,8,12].forEach(d=>{for(let n=1;n<=d*1.5;n++)POOL.push(P(n+'/'+d))});
+function prac(labs){
+  const rs=labs.slice(0,4).map(l=>{const p=P(l),eqs=[2,3,4,6,8,12,24].filter(d=>d!==p.d&&(p.u*d)%24===0).map(d=>P(p.u*d/24+'/'+d)),c=eqs.length?eqs[Math.floor(Math.random()*eqs.length)]:p;
+   const w=POOL.filter(x=>x.u!==p.u&&Math.abs(x.u-p.u)<=14).sort(()=>Math.random()-.5).slice(0,3);return[l,[c.lab,...w.map(x=>x.lab)]]});
+  TIERS.prac={name:'Practice',sub:'',lives:5,lv:[Mt('Practise your mistakes','These fractions tripped you up. Find the plank that is the same length as each gap.',rs,'Great practice! Mistakes help your brain learn.')]};
+  tier='prac';T=TIERS.prac;$('menu').classList.add('hide');$('done').classList.add('hide');load(0)}
+function showDone(sc){
+  const last=lvl>=T.lv.length-1,seen={},ms=miss.filter(m=>!seen[m.lab]&&(seen[m.lab]=1)),u=ms.map(m=>m.lab);
+  $('dt').textContent=ST(sc)+'  Level complete!';$('ds').textContent=L.tip;
+  $('dm').innerHTML=ms.length?'<b>Fractions to practise:</b><br>'+ms.slice(0,4).map(m=>'\u2022 '+m.lab+': '+m.w).join('<br>'):'No mistakes. Brilliant!';
+  const d=$('db');d.innerHTML='';
+  const add=(t,c,fn)=>{const b=document.createElement('button');b.className='b '+c;b.style.margin='4px';b.textContent=t;b.onclick=fn;d.appendChild(b)};
+  add(last?'Choose a level':'Next level','go',()=>{$('done').classList.add('hide');if(last)menu();else load(lvl+1)});
+  if(u.length&&tier!=='prac')add('Practise these','',()=>prac(u));
+  if(tier!=='prac'&&T.lv.every((_,i)=>stars(tier,i)))add('Certificate','',()=>cert(tier));
+  add('Replay level','',()=>{$('done').classList.add('hide');load(lvl,true)});
+  $('done').classList.remove('hide')}
+function cert(k){
+  const t=TIERS[k],c=$('cc'),x=c.getContext('2d'),sc=t.lv.reduce((a,_,i)=>a+stars(k,i),0),tx=(s,y,f,col)=>{x.font=f;x.fillStyle=col;x.fillText(s,600,y)};
+  x.fillStyle='#FFF8EE';x.fillRect(0,0,1200,850);x.strokeStyle='#0D2B52';x.lineWidth=18;x.strokeRect(30,30,1140,790);x.strokeStyle='#F2701C';x.lineWidth=6;x.strokeRect(60,60,1080,730);x.textAlign='center';
+  tx('BrainyEdHub',150,'bold 54px Trebuchet MS,sans-serif','#0D2B52');tx('A Hub for Smarter Education',195,'italic 28px Trebuchet MS,sans-serif','#F2701C');
+  tx('Certificate of Achievement',320,'bold 70px Georgia,serif','#0D2B52');tx('This certificate is proudly presented to',395,'32px Trebuchet MS,sans-serif','#0D2B52');
+  tx(name,510,'bold 92px Georgia,serif','#F2701C');tx('for completing all '+t.lv.length+' '+t.name+' levels of',590,'32px Trebuchet MS,sans-serif','#0D2B52');
+  tx('Fractions (Fraction Bridge)',645,'bold 40px Trebuchet MS,sans-serif','#0D2B52');tx(sc+' of '+t.lv.length*3+' stars earned',705,'36px Trebuchet MS,sans-serif','#D9A400');
+  tx(new Date().toLocaleDateString(),765,'24px Trebuchet MS,sans-serif','#0D2B52');
+  $('cd').href=c.toDataURL('image/png');$('cd').download=name+'-fractions-'+t.name+'.png';
+  $('done').classList.add('hide');$('menu').classList.add('hide');$('cert').classList.remove('hide')}
+const can=r=>{if(r===0)return true;if(r in memo)return memo[r];return memo[r]=cur.some(p=>p.u<=r&&can(r-p.u))};
+const busy=()=>['intro','menu','lesson','over','done','cert','pick'].some(i=>!$(i).classList.contains('hide'));
+function hp(){$('hp').innerHTML=[...Array(T.lives).keys()].map(i=>'<span style="color:'+(i<lives?'#FF5A6E':'#5B6B85')+'">&#9829;</span>').join(' ')}
+function burst(x,y,z,cols,n){for(let i=0;i<n;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.12),new THREE.MeshBasicMaterial({color:cols[i%cols.length]}));m.position.set(x,y,z);scene.add(m);bits.push({m,vx:(Math.random()-.5)*5,vy:3+Math.random()*4,vz:(Math.random()-.5)*3,age:0})}}
+function tex(p){
+  const w=p.u*40,h=Math.round(w*2.2/(p.u*U-.05)),c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d');x.fillStyle=COL[p.d]||'#607D8B';x.fillRect(0,0,w,h);
+  x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=6;x.strokeRect(3,3,w-6,h-6);
+  x.fillStyle='#fff';x.font='bold '+Math.min(h*.4,w*.5,w/(p.lab.length*.62))+'px sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.shadowColor='rgba(0,0,0,.5)';x.shadowBlur=4;x.fillText(p.lab,w/2,h/2);
+  return new THREE.CanvasTexture(c);
+}
+function say(s){$('msg').textContent=s}
+function lock(on){['undo','clear','go','hint'].forEach(i=>$(i).disabled=on);document.querySelectorAll('.pk').forEach(p=>p.disabled=on)}
+function upd(){
+  const t=planks.map(x=>x.p.lab).join(' + '),left=GAP-used;
+  $('sum').innerHTML=L.type==='fill'?'Bridge: '+(t?t+' = '+frac(used):'empty')+'<br>Still to fill: '+(left?frac(left):'nothing, it fits!'):'Round '+(rd+1)+' of '+L.rounds.length+'<br>Gap: <b>'+L.rounds[rd].tgt.lab+'</b>';
+  drawBar();
+}
+function mk(p){const side=M(COL[p.d]||'#607D8B');return new THREE.Mesh(new THREE.BoxGeometry(p.u*U-.05,.3,2.2),[side,side,new THREE.MeshLambertMaterial({map:tex(p)}),side,side,side])}
+function choose(p){
+  if(st!=='build'||busy())return;
+  const fill=L.type==='fill',rem=GAP-used,after=rem-p.u,m=mk(p),x0=-gapW/2+used*U+p.u*U/2,tg=fill?null:L.rounds[rd].tgt;
+  m.position.set(x0,2.8,0);scene.add(m);
+  if(fill?(after<0||!can(after)):after!==0){
+    m.material.forEach(x=>x.emissive.set('#c00000'));crash.push({m,age:0,x:x0});bad=p;sfx('crack');setTimeout(()=>sfx('heart'),250);
+    hit(rec(p,fill?(after<0?'Too long! '+p.lab+' is bigger than the '+frac(rem)+' left, so the plank snapped.':p.lab+' leaves '+frac(after)+', and no plank can fill that. The plank cracked!'):why(p,tg)));return}
+  planks.push({m,p});used+=p.u;bad=null;sfx('place');upd();
+  if(fill)say(after?'Good choice! '+frac(after)+' left to fill.':'The gap is full. Press Walk across!');
+  else{say('Yes! '+(p.lab===tg.lab?p.lab+' fits exactly.':eq(p,tg)+'. Same length!'));if(tier==='prac'&&MISS[tg.lab]){delete MISS[tg.lab];sv()}sfx('ding');lock(true);setTimeout(go,900)}
+}
+function undo(){if(st!=='build'||busy()||!planks.length)return;const x=planks.pop();scene.remove(x.m);used-=x.p.u;bad=null;upd();say('Plank removed.')}
+function clearAll(){if(st!=='build'||busy())return;planks.forEach(x=>scene.remove(x.m));planks=[];used=0;bad=null;upd();say('Bridge cleared. Start again!')}
+function resetHero(){hero.position.set(-gapW/2-1.6,0,0);hero.rotation.set(0,0,0);inner.rotation.set(0,0,0);inner.position.y=0}
+function go(){
+  if(st!=='build'||busy())return;
+  if(!planks.length){say('Add some planks first!');return}
+  lock(true);
+  if(used===GAP){tgtX=gapW/2+2;st='cross'}else{tgtX=-gapW/2+used*U+.1;st='toedge'}
+  if(L.type==='fill')say(who()+' sets off across the bridge...');
+}
+function win(){
+  const last=L.type==='fill'||rd===L.rounds.length-1;
+  st='won';burst(hero.position.x,1,0,['#F2701C','#FFC400','#2E9BD6','#2EB872','#E0457B'],last?60:20);
+  if(!last){setTimeout(()=>{rd++;round()},1800);return}
+  const lost=T.lives-lives,sc=Math.max(1,(lost===0?3:lost===1?2:1)-hints);if(tier!=='prac'){(PR[tier]=PR[tier]||[])[lvl]=Math.max(stars(tier,lvl),sc);sv()}sfx('win');
+  say(ST(sc)+' '+who()+' made it across! '+(L.type==='fill'?planks.map(x=>x.p.lab).join(' + ')+' = '+frac(used)+'. ':'')+L.tip);
+  setTimeout(()=>showDone(sc),1800);
+}
+function lose(){
+  lives--;hp();sfx('splash');burst(hero.position.x,-1.5,0,['#BFE6FA','#ffffff','#2E9BD6'],24);
+  const m='Splash! '+who()+' fell in. The bridge was '+frac(GAP-used)+' too short.';
+  if(lives<=0){say(m);over()}
+  else{say(m+' Add more planks. ('+lives+(lives===1?' life':' lives')+' left)');setTimeout(()=>{resetHero();st='build';lock(false)},1800)}
+}
+function hit(m){lives--;hp();if(lives<=0){say(m);over()}else say(m+' ('+lives+(lives===1?' life':' lives')+' left)')}
+function over(){st='over';lock(true);sfx('lose');setTimeout(()=>{$('ovp').textContent=who()+' ran out of hearts. Read the hints, then try this level again!';$('over').classList.remove('hide')},1100)}
+function setup(g,list){
+  GAP=g;gapW=g*U;cur=list;memo={};bad=null;
+  planks.forEach(x=>scene.remove(x.m));planks=[];used=0;
+  cL.position.x=-gapW/2-4;cR.position.x=gapW/2+4;
+  if(ghost){scene.remove(ghost);ghost.geometry.dispose()}
+  ghost=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(gapW,.3,2.2)),new THREE.LineBasicMaterial({color:0xffffff}));
+  ghost.position.y=-.15;scene.add(ghost);
+  resetHero();st='build';lock(false);
+  const tray=$('tray');tray.innerHTML='';
+  list.forEach(p=>{const b=document.createElement('button');b.className='pk';b.textContent=p.lab;b.style.width=Math.max(46,Math.min(140,p.u*10))+'px';b.style.background=COL[p.d]||'#607D8B';b.setAttribute('aria-label','Choose '+p.lab+' plank');b.setAttribute('data-l',p.lab);b.onclick=()=>choose(p);tray.appendChild(b)});
+  upd();fit();
+}
+function round(){
+  const r=L.rounds[rd];setup(r.tgt.u,r.pl.slice().sort(()=>Math.random()-.5));
+  say('Round '+(rd+1)+' of '+L.rounds.length+': find a plank exactly '+r.tgt.lab+' long.');
+}
+function load(i,quiet){
+  lvl=i;L=T.lv[i];lives=T.lives;hp();rd=0;miss=[];hints=0;
+  crash.forEach(c=>scene.remove(c.m));crash=[];$('over').classList.add('hide');
+  const m=L.type==='match';['go','undo','clear'].forEach(k=>$(k).classList.toggle('hide',m));$('next').classList.add('hide');
+  $('lv').textContent=T.name+' \u00B7 Level '+(i+1)+' of '+T.lv.length;
+  if(m)round();else{setup(L.gap,L.pl);say('Help '+who()+' cross! The gap is '+frac(GAP)+' long. Fill it exactly.')}
+  if(!quiet){$('lt').textContent='Level '+(i+1)+': '+L.t;$('lg').textContent=L.g;$('lh').textContent=m?'Pick the plank that matches the gap. A wrong pick costs a heart.':'Fill the outlined gap exactly. A wrong plank snaps and costs a heart.';$('lesson').classList.remove('hide')}
+}
+function menu(){
+  const d=$('dl');d.innerHTML='';$('mh').textContent='Choose a level';
+  ['easy','med','hard'].forEach(k=>{const t=TIERS[k],n=t.lv.length,done=t.lv.filter((_,i)=>stars(k,i)).length,sc=t.lv.reduce((a,_,i)=>a+stars(k,i),0),b=document.createElement('button');b.className='b dif';b.textContent=t.name+' ('+t.sub+'): '+done+'/'+n+' levels, '+sc+'/'+n*3+' stars';b.onclick=()=>levels(k);d.appendChild(b)});
+  const ex=(t,fn)=>{const b=document.createElement('button');b.className='b';b.style.margin='4px 4px 0 0';b.textContent=t;b.onclick=fn;d.appendChild(b)},ml=Object.keys(MISS).sort((x,y)=>MISS[y]-MISS[x]);
+  if(ml.length)ex('Practise my mistakes',()=>prac(ml));
+  ex('Reset progress',()=>{if(confirm('Reset all progress for '+name+'?')){PR={};MISS={};sv();menu()}});
+  $('lesson').classList.add('hide');$('menu').classList.remove('hide');
+}
+function levels(k){
+  const t=TIERS[k],d=$('dl');d.innerHTML='';$('mh').textContent=t.name+' levels';
+  t.lv.forEach((l,i)=>{const b=document.createElement('button');b.className='b dif';b.textContent=(i+1)+'. '+l.t+'  '+ST(stars(k,i));b.onclick=()=>{tier=k;T=t;$('menu').classList.add('hide');load(i)};d.appendChild(b)});
+  if(t.lv.every((_,i)=>stars(k,i))){const c=document.createElement('button');c.className='b go dif';c.textContent='Get my certificate';c.onclick=()=>cert(k);d.appendChild(c)}
+  const bk=document.createElement('button');bk.className='b';bk.textContent='Back';bk.onclick=menu;d.appendChild(bk);
+}
+function fit(){
+  const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;
+  R.setSize(w,h,false);cam.aspect=w/h;
+  D=Math.max(12,(gapW/2+6)/(Math.tan(25*Math.PI/180)*cam.aspect));
+  cam.updateProjectionMatrix();
+}
+addEventListener('resize',fit);
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag=e.clientX;cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(drag===null)return;th=Math.max(-1,Math.min(1,th+(e.clientX-drag)*.006));drag=e.clientX});
+cv.addEventListener('pointerup',()=>drag=null);
+$('undo').onclick=undo;$('clear').onclick=clearAll;$('go').onclick=go;
+$('next').onclick=()=>{if(lvl<T.lv.length-1)load(lvl+1);else menu()};
+$('again').onclick=()=>load(lvl,true);$('restart').onclick=()=>load(0);
+$('lgo').onclick=()=>$('lesson').classList.add('hide');$('lvb').onclick=menu;
+let last=performance.now(),t=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000,.05);last=now;t+=dt;
+  water.position.y=-1.6+Math.sin(t*2)*.04;
+  cloth.rotation.y=Math.sin(t*3)*.25;
+  planks.forEach(x=>{if(x.m.position.y>-.15)x.m.position.y=Math.max(-.15,x.m.position.y-8*dt)});
+  crash.forEach(c=>{c.age+=dt;if(c.age<.6){c.m.position.y=Math.max(-.15,c.m.position.y-8*dt);c.m.position.x=c.x+Math.sin(c.age*50)*.06}else{c.m.position.y-=6*dt;c.m.rotation.z+=3*dt}if(c.m.position.y<-2.5){scene.remove(c.m);c.dead=1}});crash=crash.filter(c=>!c.dead);
+  bits.forEach(b=>{b.age+=dt;b.vy-=9*dt;b.m.position.x+=b.vx*dt;b.m.position.y+=b.vy*dt;b.m.position.z+=b.vz*dt;b.m.rotation.x+=5*dt;if(b.age>1.8){scene.remove(b.m);b.dead=1}});bits=bits.filter(b=>!b.dead);
+  let face=0;
+  if(st==='cross'||st==='toedge'){
+    face=Math.PI/2;hero.position.x+=2.6*dt;pose('walk',t);const sg=Math.sin(t*8)>0;if(sg!==lastSg){lastSg=sg;sfx('step')}
+    if(hero.position.x>=tgtX){if(st==='cross')win();else{st='fall';vy=0}}
+  }else if(st==='fall'){
+    face=Math.PI/2;vy-=14*dt;hero.position.y+=vy*dt;hero.position.x+=.6*dt;inner.rotation.x+=3*dt;pose('fall',t);
+    if(hero.position.y<-1.8){st='lost';lose()}
+  }else if(st==='won'){hero.position.y=Math.abs(Math.sin(t*5))*.35;pose('cheer',t)}
+  else if(st!=='lost')pose('idle',t);
+  hero.rotation.y+=(face-hero.rotation.y)*Math.min(1,dt*8);
+  cam.position.set(Math.sin(th)*D,2.5+D*.22,Math.cos(th)*D);cam.lookAt(0,-.4,0);
+  R.render(scene,cam);
+}
+let chIdx=0,pendMenu=true;
+function showPick(){
+  $('pn').textContent='Hi '+name+'! Pick how you look.';const g=$('pg');g.innerHTML='';
+  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='cb'+(i===chIdx?' on':'');b.setAttribute('aria-label','Character '+(i+1));
+   b.innerHTML='<svg viewBox="0 0 60 72" width="52" height="62"><rect x="12" y="46" width="36" height="24" rx="9" fill="'+c.sh+'" stroke="#0A1A33" stroke-width="2.5"/><circle cx="30" cy="31" r="16" fill="'+c.s+'" stroke="#0A1A33" stroke-width="2.5"/><path d="M13 27A17 15 0 0 1 47 27Z" fill="'+c.h+'" stroke="#0A1A33" stroke-width="2.5"/><rect x="9" y="26" width="42" height="5" rx="2.5" fill="'+c.h+'" stroke="#0A1A33" stroke-width="2.5"/><circle cx="24" cy="36" r="2.6" fill="#111"/><circle cx="36" cy="36" r="2.6" fill="#111"/><path d="M23 42Q30 49 37 42" stroke="#7A1F1F" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
+   b.onclick=()=>{chIdx=i;look(i);sfx('click');[...g.children].forEach((x,j)=>x.classList.toggle('on',j===i))};g.appendChild(b)});
+  $('pick').classList.remove('hide')}
+$('pgo').onclick=()=>{try{localStorage.setItem(pk(name,'beChar'),chIdx)}catch(e){}$('pick').classList.add('hide');sfx('ding');if(pendMenu)menu();else say('Welcome back, '+name+'!')};
+function begin(n){
+  n=(n||$('nm').value||'').trim().slice(0,12)||'Sam';const same=name===n;
+  setName(n);loadP(n);try{const p=profiles().filter(x=>x.toLowerCase()!==n.toLowerCase());p.unshift(n);localStorage.setItem('beProfiles',JSON.stringify(p.slice(0,8)))}catch(e){}
+  $('intro').classList.add('hide');sfx('click');chIdx=0;try{chIdx=+localStorage.getItem(pk(n,'beChar'))||0}catch(e){}look(chIdx);pendMenu=!same;showPick()}
+function showIntro(){const d=$('pl');d.innerHTML='';profiles().forEach(n=>{const b=document.createElement('button');b.className='b dif';b.textContent=n;b.onclick=()=>begin(n);d.appendChild(b)});$('nm').value='';$('intro').classList.remove('hide')}
+$('st').onclick=()=>begin();$('nm').onkeydown=e=>{if(e.key==='Enter')begin()};$('rn').onclick=showIntro;
+$('hint').onclick=()=>{
+  if(st!=='build'||busy())return;
+  const rem=GAP-used,ok=cur.filter(p=>L.type==='fill'?(rem-p.u>=0&&can(rem-p.u)):p.u===GAP);
+  if(!ok.length){say('No plank can finish the bridge from here. Try Undo.');return}
+  const p=ok[0];hints++;sfx('hint');
+  document.querySelectorAll('.pk').forEach(b=>b.classList.toggle('glow',b.getAttribute('data-l')===p.lab));
+  setTimeout(()=>document.querySelectorAll('.pk').forEach(b=>b.classList.remove('glow')),3500);
+  say('Hint: try the '+p.lab+' plank. Hints cost a star, so you can still earn '+Math.max(1,3-hints)+'.')};
+$('barb').onclick=()=>{barOn=!barOn;try{localStorage.setItem('beBar',barOn?'1':'0')}catch(e){}$('barb').setAttribute('aria-pressed',barOn);drawBar()};
+$('snd').onclick=()=>{mute=!mute;try{localStorage.setItem('beMute',mute?'1':'0')}catch(e){}$('snd').textContent=mute?'Sound off':'Sound on';sfx('ding')};
+$('snd').textContent=mute?'Sound off':'Sound on';$('barb').setAttribute('aria-pressed',barOn);
+$('cx').onclick=()=>$('cert').classList.add('hide');
+addEventListener('pointerdown',()=>{if(!mute)ac()},true);
+showIntro();load(0,true);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BrainyEdHub — Math Blaster 3D</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23071020'/><text x='50' y='68' font-size='58' font-weight='900' text-anchor='middle' fill='%23F97316' font-family='system-ui'>B</text></svg>">
+<style>
+  :root {
+    /* ---- BrainyEdHub brand palette ---- */
+    --navy:        #1B3A5C;
+    --navy-deep:   #0E2540;
+    --navy-ink:    #07101F;
+    --blue:        #3B82F6;
+    --blue-soft:   #60A5FA;
+    --blue-glow:   #7DB8FF;
+    --orange:      #F97316;
+    --orange-soft: #FFA35C;
+    --orange-glow: #FFC48A;
+    --white:       #F8FAFC;
+    --muted:       #64748B;
+    --muted-2:     #475569;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--navy-ink);
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--white);
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: "ss01", "cv01", "tnum";
+  }
+
+  #scene {
+    display: block;
+    width: 100%; height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* ============================================================
+     ✦ PREMIUM WORDMARK — BrainyEdHub
+     ============================================================ */
+  #brand {
+    position: fixed;
+    top: clamp(16px, 2.4vw, 26px);
+    left: clamp(18px, 2.8vw, 34px);
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1);
+  }
+  #brand.on { opacity: 1; transform: translateY(0); }
+
+  .wordmark {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+  }
+
+  .wordmark-main {
+    display: flex;
+    align-items: baseline;
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 800;
+    letter-spacing: -.038em;
+    line-height: 1;
+    filter: drop-shadow(0 4px 18px rgba(0,0,0,.55));
+  }
+  .wordmark-main .w1 {
+    color: #E8EEF7;
+    font-weight: 300;
+    letter-spacing: -.028em;
+  }
+  .wordmark-main .w2 {
+    background: linear-gradient(120deg, #FFB067 0%, var(--orange) 40%, var(--orange) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+    letter-spacing: -.042em;
+    text-shadow: 0 0 32px rgba(249,115,22,.35);
+  }
+
+  .wordmark-sub {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: clamp(8px, .78vw, 9.5px);
+    font-weight: 700;
+    letter-spacing: .36em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .wordmark-sub .rule {
+    width: 18px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange));
+    opacity: .8;
+  }
+  .wordmark-sub .dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 6px var(--orange);
+    flex: none;
+  }
+
+  /* ============================================================
+     HUD
+     ============================================================ */
+  #hud {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(14px, 2.4vw, 28px) clamp(16px, 2.8vw, 36px);
+    padding-top: clamp(90px, 11vw, 116px);
+    opacity: 0;
+    transition: opacity .55s ease;
+  }
+  #hud.on { opacity: 1; }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, auto) 1fr;
+    align-items: start;
+    gap: 16px;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .stat.right { align-items: flex-end; }
+
+  .stat .k {
+    font-size: clamp(9px, 1vw, 10.5px);
+    letter-spacing: .32em;
+    font-weight: 700;
+    color: var(--muted-2);
+    text-transform: uppercase;
+  }
+  .stat .v {
+    font-size: clamp(24px, 3.6vw, 40px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.04em;
+    line-height: .95;
+    color: var(--white);
+    text-shadow: 0 0 28px rgba(96,165,250,.5);
+  }
+
+  #lives { display: flex; gap: 7px; margin-top: 8px; }
+  .heart {
+    width: clamp(15px, 1.75vw, 21px);
+    height: clamp(15px, 1.75vw, 21px);
+    border-radius: 50%;
+    position: relative;
+    background: radial-gradient(circle at 35% 28%, #FFE0B8 0%, var(--orange-soft) 32%, var(--orange) 68%, #B45309 100%);
+    box-shadow:
+      0 0 16px rgba(249,115,22,.85),
+      0 0 32px rgba(249,115,22,.4),
+      inset 0 -3px 5px rgba(120,40,0,.5),
+      inset 0 2px 4px rgba(255,255,255,.4);
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .3s, filter .3s;
+  }
+  .heart.dead {
+    background: rgba(30,41,59,.7);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(100,116,139,.35),
+      inset 0 0 8px rgba(0,0,0,.4);
+    filter: saturate(0);
+    opacity: .55;
+    transform: scale(.78);
+  }
+
+  /* ---- Question block ---- */
+  .question-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  #question {
+    font-size: clamp(30px, 5.6vw, 60px);
+    font-weight: 900;
+    letter-spacing: -.035em;
+    font-variant-numeric: tabular-nums;
+    color: #FFFFFF;
+    line-height: 1;
+    white-space: nowrap;
+    text-shadow:
+      0 0 30px rgba(96,165,250,.7),
+      0 0 70px rgba(59,130,246,.35),
+      0 4px 24px rgba(0,0,0,.6);
+    transition: color .25s, text-shadow .25s;
+  }
+  #question.good {
+    color: #7DFFBF;
+    text-shadow: 0 0 36px rgba(80,255,170,.95), 0 0 80px rgba(34,197,94,.4);
+  }
+  #question.bad {
+    color: var(--orange-glow);
+    text-shadow: 0 0 36px rgba(249,115,22,.95), 0 0 80px rgba(239,68,68,.5);
+  }
+
+  #combo {
+    font-size: clamp(11px, 1.4vw, 14px);
+    font-weight: 800;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--orange-soft), var(--orange));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 16px rgba(249,115,22,.85));
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity .3s, transform .3s;
+  }
+  #combo.on { opacity: 1; transform: translateY(0); }
+
+  .bar {
+    width: min(560px, 76vw);
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(148,163,184,.14);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(148,163,184,.08);
+  }
+  #barFill {
+    height: 100%;
+    width: 100%;
+    border-radius: 99px;
+    transform-origin: left center;
+    background: linear-gradient(90deg, var(--orange), var(--orange-soft) 35%, var(--blue-soft) 72%, var(--blue));
+    box-shadow:
+      0 0 12px rgba(249,115,22,.7),
+      0 0 22px rgba(59,130,246,.5);
+  }
+  #barFill.low {
+    background: linear-gradient(90deg, #F87171, #EF4444);
+    box-shadow: 0 0 14px rgba(239,68,68,.9), 0 0 28px rgba(239,68,68,.55);
+    animation: pulseBar .6s ease-in-out infinite alternate;
+  }
+  @keyframes pulseBar {
+    from { opacity: .8; }
+    to   { opacity: 1; }
+  }
+
+  /* ============================================================
+     OVERLAY
+     ============================================================ */
+  #overlay {
+    position: fixed; inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 42%, rgba(27,58,92,.55), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(249,115,22,.10), transparent 70%),
+      rgba(4,8,18,.94);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    z-index: 20;
+    transition: opacity .45s ease;
+    overflow-y: auto;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .panel {
+    position: relative;
+    width: min(580px, 100%);
+    padding: clamp(30px, 4.6vw, 52px) clamp(24px, 4vw, 48px);
+    text-align: center;
+    border-radius: 28px;
+    background:
+      linear-gradient(160deg, rgba(27,58,92,.55) 0%, rgba(14,37,64,.75) 50%, rgba(7,16,31,.92) 100%);
+    border: 1px solid rgba(148,163,184,.14);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,.75),
+      0 0 0 1px rgba(59,130,246,.10) inset,
+      0 0 80px rgba(249,115,22,.08),
+      inset 0 1px 0 rgba(255,255,255,.07);
+    overflow: hidden;
+    animation: panelIn .6s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Decorative top edge */
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 55%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+    opacity: .7;
+  }
+  /* Subtle corner glow */
+  .panel::after {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(249,115,22,.18), transparent 65%);
+    pointer-events: none;
+  }
+
+  /* Panel wordmark */
+  .panel .wordmark {
+    margin-bottom: 26px;
+    align-items: center;
+  }
+  .panel .wordmark-main {
+    font-size: clamp(20px, 2.4vw, 26px);
+    justify-content: center;
+  }
+  .panel .wordmark-sub {
+    justify-content: center;
+  }
+
+  .panel h1 {
+    font-size: clamp(30px, 6vw, 52px);
+    font-weight: 900;
+    line-height: .98;
+    letter-spacing: -.04em;
+    color: #FFFFFF;
+    text-shadow: 0 4px 30px rgba(0,0,0,.6);
+  }
+  .panel h1 span {
+    display: block;
+    background: linear-gradient(115deg, var(--orange-soft) 0%, var(--orange) 35%, var(--blue-soft) 72%, var(--blue) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 30px rgba(249,115,22,.4));
+    font-weight: 900;
+  }
+
+  .panel p {
+    margin: 20px auto 0;
+    max-width: 400px;
+    font-size: clamp(13px, 1.6vw, 15px);
+    line-height: 1.7;
+    color: #94A3B8;
+    font-weight: 400;
+  }
+
+  /* Stat pills */
+  .stats-grid {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px 0 6px;
+    flex-wrap: wrap;
+  }
+  .stats-grid > div {
+    flex: 1;
+    min-width: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 10px 12px;
+    border-radius: 14px;
+    background: rgba(15,23,42,.55);
+    border: 1px solid rgba(148,163,184,.10);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .stats-grid .k {
+    font-size: 9.5px;
+    letter-spacing: .24em;
+    font-weight: 700;
+    color: var(--muted-2);
+    text-transform: uppercase;
+  }
+  .stats-grid .v {
+    font-size: clamp(22px, 3.8vw, 30px);
+    font-weight: 800;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+    color: #F1F5F9;
+    line-height: 1;
+    text-shadow: 0 0 22px rgba(249,115,22,.4);
+  }
+
+  /* Primary button */
+  button {
+    position: relative;
+    margin-top: 30px;
+    padding: 16px 58px;
+    font-family: inherit;
+    font-size: clamp(14px, 1.8vw, 16px);
+    font-weight: 800;
+    letter-spacing: .22em;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    overflow: hidden;
+    background: linear-gradient(115deg, var(--orange) 0%, var(--orange-soft) 32%, var(--blue-soft) 68%, var(--blue) 100%);
+    background-size: 200% 100%;
+    box-shadow:
+      0 14px 40px rgba(249,115,22,.42),
+      0 8px 28px rgba(59,130,246,.34),
+      inset 0 1px 0 rgba(255,255,255,.45),
+      inset 0 -2px 6px rgba(0,0,0,.2);
+    transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background-position .5s;
+    text-shadow: 0 1px 4px rgba(0,0,0,.35);
+    text-transform: uppercase;
+  }
+  button::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.5) 50%, transparent 100%);
+    transition: left .7s ease;
+  }
+  button:hover {
+    transform: translateY(-3px) scale(1.03);
+    background-position: 100% 0;
+    box-shadow:
+      0 20px 50px rgba(249,115,22,.55),
+      0 12px 34px rgba(59,130,246,.45),
+      inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  button:hover::before { left: 100%; }
+  button:active { transform: translateY(-1px) scale(1.0); }
+
+  .hint {
+    margin-top: 24px;
+    font-size: 10.5px;
+    letter-spacing: .3em;
+    color: var(--muted-2);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  /* Feature list on start screen */
+  .features {
+    display: flex;
+    justify-content: center;
+    gap: clamp(14px, 3vw, 32px);
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(148,163,184,.10);
+  }
+  .feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    letter-spacing: .16em;
+    font-weight: 700;
+    color: var(--muted-2);
+    text-transform: uppercase;
+  }
+  .feature b {
+    font-size: clamp(16px, 2.2vw, 20px);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    background: linear-gradient(115deg, var(--orange-soft), var(--orange));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Floating score pop ---------- */
+  .pop {
+    position: fixed;
+    font-weight: 900;
+    font-size: clamp(22px, 3.2vw, 34px);
+    letter-spacing: -.03em;
+    pointer-events: none;
+    z-index: 15;
+    transform: translate(-50%, -50%);
+    animation: popUp 1s cubic-bezier(.2,.7,.3,1) forwards;
+    text-shadow: 0 0 24px currentColor, 0 2px 8px rgba(0,0,0,.5);
+    white-space: nowrap;
+  }
+  @keyframes popUp {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+    20%  { opacity: 1; transform: translate(-50%, -82%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -230%) scale(1); }
+  }
+
+  .flash {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 12;
+    opacity: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(249,115,22,.45), rgba(239,68,68,.15) 40%, transparent 68%);
+    animation: flashOut .55s ease-out forwards;
+  }
+  @keyframes flashOut {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 620px) {
+    .wordmark-sub { display: none; }
+    .topbar { grid-template-columns: 1fr 1.4fr 1fr; }
+    .stats-grid > div { min-width: 76px; padding: 11px 6px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div id="brand"></div>
+
+<div id="hud">
+  <div class="topbar">
+    <div class="stat">
+      <span class="k">Score</span>
+      <span class="v" id="score">0</span>
+    </div>
+
+    <div class="question-box">
+      <div id="question">MATH BLASTER</div>
+      <div id="combo">COMBO ×1</div>
+      <div class="bar"><div id="barFill"></div></div>
+    </div>
+
+    <div class="stat right">
+      <span class="k">Level</span>
+      <span class="v" id="level">1</span>
+      <div id="lives"></div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="panel" id="panel"></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ============================================================
+   ▶▶▶  BRANDING CONFIG  ◀◀◀
+   ============================================================ */
+const BRAND = {
+  name:     'BrainyEdHub',
+  tagline:  'The Hub for Smarter Education',
+
+  /* Colours sampled directly from the BrainyEdHub logo */
+  navy:        0x1B3A5C,
+  navySoft:    0x2C5A8A,
+  blue:        0x3B82F6,
+  blueSoft:    0x60A5FA,
+  orange:      0xF97316,
+  orangeSoft:  0xFFA35C,
+  orangeGlow:  0xFFC48A,
+};
+
+/* Premium wordmark — no icon, pure typography */
+const WORDMARK_HTML = `
+  <div class="wordmark">
+    <div class="wordmark-main">
+      <span class="w1">Brainy</span><span class="w2">EdHub</span>
+    </div>
+    <div class="wordmark-sub">
+      <span class="rule"></span>
+      <span class="dot"></span>
+      <span>${BRAND.tagline}</span>
+    </div>
+  </div>`;
+
+document.getElementById('brand').innerHTML = WORDMARK_HTML;
+requestAnimationFrame(() => document.getElementById('brand').classList.add('on'));
+
+/* ============================================================
+   RENDERER / SCENE
+   ============================================================ */
+const canvas   = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping        = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+renderer.outputColorSpace   = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04070F);
+scene.fog        = new THREE.FogExp2(0x04070F, 0.013);
+
+const camera   = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
+const CAM_BASE = new THREE.Vector3(0, 0, 12);
+camera.position.copy(CAM_BASE);
+
+const raycaster = new THREE.Raycaster();
+const pointer   = new THREE.Vector2(-10, -10);
+
+/* ---------- Lights ---------- */
+scene.add(new THREE.AmbientLight(0x9FB4FF, 0.75));
+
+const keyLight = new THREE.DirectionalLight(0xFFFFFF, 1.8);
+keyLight.position.set(6, 9, 12);
+scene.add(keyLight);
+
+/* Brand-coloured rim lights */
+const rimOrange = new THREE.PointLight(BRAND.orange, 300, 100, 2);
+rimOrange.position.set(-16, 8, 6);
+scene.add(rimOrange);
+
+const rimBlue = new THREE.PointLight(BRAND.blue, 260, 100, 2);
+rimBlue.position.set(16, -8, 6);
+scene.add(rimBlue);
+
+const rimDeep = new THREE.PointLight(BRAND.navySoft, 160, 75, 2);
+rimDeep.position.set(0, -12, -6);
+scene.add(rimDeep);
+
+/* ---------- Starfield (orange + blue tinted) ---------- */
+function createStars() {
+  const N   = 2800;
+  const pos = new Float32Array(N * 3);
+  const col = new Float32Array(N * 3);
+  const c   = new THREE.Color();
+
+  for (let i = 0; i < N; i++) {
+    const r     = 70 + Math.random() * 150;
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+
+    pos[i*3]     = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3 + 2] = r * Math.cos(phi);
+
+    if (Math.random() < 0.30) {
+      c.setHSL(0.075 + Math.random() * 0.05, 0.9, 0.6 + Math.random() * 0.25);
+    } else {
+      c.setHSL(0.575 + Math.random() * 0.11, 0.75, 0.6 + Math.random() * 0.35);
+    }
+    col[i*3] = c.r; col[i*3 + 1] = c.g; col[i*3 + 2] = c.b;
+  }
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+
+  return new THREE.Points(g, new THREE.PointsMaterial({
+    size: 2.2, vertexColors: true, transparent: true, opacity: 0.95,
+    depthWrite: false, fog: false,
+    blending: THREE.AdditiveBlending, sizeAttenuation: true
+  }));
+}
+const stars = createStars();
+scene.add(stars);
+
+/* ---------- Grid floor ---------- */
+const grid = new THREE.GridHelper(320, 64, BRAND.navySoft, 0x0D1C33);
+grid.position.y = -11;
+grid.material.transparent = true;
+grid.material.opacity = 0.45;
+scene.add(grid);
+
+/* ============================================================
+   TEXTURES
+   ============================================================ */
+function makeGlowTexture() {
+  const S = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  grad.addColorStop(0.0,  'rgba(255,255,255,1)');
+  grad.addColorStop(0.22, 'rgba(255,255,255,0.55)');
+  grad.addColorStop(0.55, 'rgba(255,255,255,0.14)');
+  grad.addColorStop(1.0,  'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, S, S);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const glowTex = makeGlowTexture();
+
+function makeLabelTexture(text) {
+  const S = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const len  = String(text).length;
+  const size = len >= 3 ? 104 : len === 2 ? 148 : 172;
+  const font = `900 ${size}px 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const cx = S / 2, cy = S / 2 + 6;
+
+  ctx.font = font;
+  ctx.shadowColor = 'rgba(255,210,150,0.95)';
+  ctx.shadowBlur  = 34;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, cx, cy);
+
+  ctx.shadowBlur = 0;
+  ctx.lineJoin   = 'round';
+  ctx.miterLimit = 2;
+  ctx.lineWidth  = 18;
+  ctx.strokeStyle = 'rgba(4,9,22,0.94)';
+  ctx.strokeText(text, cx, cy);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, cx, cy);
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace  = THREE.SRGBColorSpace;
+  t.anisotropy  = 4;
+  return t;
+}
+
+/* ============================================================
+   PARTICLES
+   ============================================================ */
+const P_MAX = 900;
+const pPos   = new Float32Array(P_MAX * 3);
+const pCol   = new Float32Array(P_MAX * 3);
+const pBase  = new Float32Array(P_MAX * 3);
+const pVel   = new Float32Array(P_MAX * 3);
+const pLife  = new Float32Array(P_MAX);
+const pMax   = new Float32Array(P_MAX);
+let   pCursor = 0;
+
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('color',    new THREE.BufferAttribute(pCol, 3));
+
+const particleSystem = new THREE.Points(pGeo, new THREE.PointsMaterial({
+  size: 0.36, vertexColors: true, transparent: true, opacity: 1,
+  depthWrite: false, blending: THREE.AdditiveBlending,
+  sizeAttenuation: true, fog: false
+}));
+particleSystem.frustumCulled = false;
+scene.add(particleSystem);
+
+function burst(pos, color, count = 48, speed = 7.5) {
+  for (let i = 0; i < count; i++) {
+    const idx = pCursor;
+    pCursor = (pCursor + 1) % P_MAX;
+
+    pPos[idx*3]     = pos.x;
+    pPos[idx*3 + 1] = pos.y;
+    pPos[idx*3 + 2] = pos.z;
+
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const sp    = speed * (0.35 + Math.random() * 0.9);
+
+    pVel[idx*3]     = Math.sin(phi) * Math.cos(theta) * sp;
+    pVel[idx*3 + 1] = Math.sin(phi) * Math.sin(theta) * sp;
+    pVel[idx*3 + 2] = Math.cos(phi) * sp;
+
+    const life = 0.5 + Math.random() * 0.75;
+    pLife[idx] = life;
+    pMax[idx]  = life;
+
+    const tint = 0.75 + Math.random() * 0.5;
+    pBase[idx*3]     = color.r * tint;
+    pBase[idx*3 + 1] = color.g * tint;
+    pBase[idx*3 + 2] = color.b * tint;
+
+    pCol[idx*3]     = pBase[idx*3];
+    pCol[idx*3 + 1] = pBase[idx*3 + 1];
+    pCol[idx*3 + 2] = pBase[idx*3 + 2];
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = 0; i < P_MAX; i++) {
+    if (pLife[i] <= 0) continue;
+
+    pLife[i] -= dt;
+    if (pLife[i] <= 0) {
+      pCol[i*3] = pCol[i*3 + 1] = pCol[i*3 + 2] = 0;
+      continue;
+    }
+
+    const drag = Math.pow(0.09, dt);
+    pVel[i*3]   *= drag;
+    pVel[i*3 + 1] = pVel[i*3 + 1] * drag - 5.5 * dt;
+    pVel[i*3 + 2] *= drag;
+
+    pPos[i*3]   += pVel[i*3]   * dt;
+    pPos[i*3 + 1] += pVel[i*3 + 1] * dt;
+    pPos[i*3 + 2] += pVel[i*3 + 2] * dt;
+
+    const f  = pLife[i] / pMax[i];
+    const ff = f * f;
+    pCol[i*3]   = pBase[i*3]   * ff;
+    pCol[i*3 + 1] = pBase[i*3 + 1] * ff;
+    pCol[i*3 + 2] = pBase[i*3 + 2] * ff;
+  }
+  pGeo.attributes.position.needsUpdate = true;
+  pGeo.attributes.color.needsUpdate    = true;
+}
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+let actx = null;
+function initAudio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+}
+
+function tone(freq, dur, type = 'sine', vol = 0.07, delay = 0) {
+  if (!actx) return;
+  const t0 = actx.currentTime + delay;
+  const osc  = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(actx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+}
+
+const sfxCorrect = (combo) => {
+  const base = 540 + Math.min(combo, 8) * 48;
+  tone(base,       0.14, 'triangle', 0.085);
+  tone(base * 1.5, 0.18, 'triangle', 0.06, 0.06);
+};
+const sfxWrong = () => {
+  tone(190, 0.30, 'sawtooth', 0.07);
+  tone(120, 0.40, 'sawtooth', 0.055, 0.05);
+};
+const sfxLevel = () => {
+  [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.22, 'triangle', 0.06, i * 0.08));
+};
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+const state = {
+  phase: 'menu', phaseT: 0,
+  level: 1, score: 0, lives: 3,
+  combo: 0, bestCombo: 0, correctCount: 0,
+  roundT: 0, roundDuration: 9,
+  answer: 0, chosen: null, resolveCorrect: false,
+  layoutScale: 1, shake: 0, time: 0,
+};
+
+const ORB_COUNT  = 4;
+const ORB_RADIUS = 1.15;
+
+/* Crystal palette — brand orange + blue family */
+const PALETTE = [
+  BRAND.orange,
+  BRAND.blue,
+  BRAND.orangeSoft,
+  BRAND.blueSoft
+];
+
+const orbs = [];
+
+/* ============================================================
+   ORB CREATION
+   ============================================================ */
+function createOrb(index) {
+  const group = new THREE.Group();
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4,
+    roughness: 0.18, metalness: 0.65, flatShading: true,
+    transparent: true, opacity: 1
+  });
+  const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(ORB_RADIUS, 1), mat);
+  group.add(mesh);
+
+  const shellMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff, wireframe: true, transparent: true,
+    opacity: 0.20, depthWrite: false
+  });
+  const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(ORB_RADIUS * 1.42, 0), shellMat);
+  group.add(shell);
+
+  const haloMat = new THREE.SpriteMaterial({
+    map: glowTex, color: 0xffffff, transparent: true, opacity: 0.42,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+  });
+  const halo = new THREE.Sprite(haloMat);
+  halo.scale.set(6.4, 6.4, 1);
+  group.add(halo);
+
+  const labelMat = new THREE.SpriteMaterial({
+    map: makeLabelTexture('0'), transparent: true, depthWrite: false,
+    opacity: 1, fog: false
+  });
+  const label = new THREE.Sprite(labelMat);
+  label.position.set(0, 0, 1.6);
+  label.scale.set(3.0, 3.0, 1);
+  group.add(label);
+
+  const hit = new THREE.Mesh(
+    new THREE.SphereGeometry(ORB_RADIUS * 1.8, 12, 10),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  group.add(hit);
+
+  const orb = {
+    index, group, mesh, shell, halo, label,
+    mat, shellMat, haloMat, labelMat, hit,
+    value: 0, mode: 'idle', shakeX: 0, hovered: false, baseScale: 1
+  };
+
+  mesh.userData.orb  = orb;
+  label.userData.orb = orb;
+  hit.userData.orb   = orb;
+
+  scene.add(group);
+  return orb;
+}
+
+for (let i = 0; i < ORB_COUNT; i++) {
+  const o = createOrb(i);
+  o.group.visible = false;
+  orbs.push(o);
+}
+
+/* ============================================================
+   QUESTION GENERATION
+   ============================================================ */
+const ri = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function generateQuestion(level) {
+  const ops = ['+', '-'];
+  if (level >= 3) ops.push('×');
+  if (level >= 5) ops.push('÷');
+  if (level >= 7) ops.push('×', '÷');
+
+  const op  = ops[Math.floor(Math.random() * ops.length)];
+  const max = Math.min(9 + level * 5, 60);
+
+  let a, b, answer, text;
+
+  switch (op) {
+    case '+':
+      a = ri(2, max); b = ri(2, max);
+      answer = a + b; text = `${a} + ${b}`;
+      break;
+    case '-':
+      a = ri(6, max + 12); b = ri(2, a - 1);
+      answer = a - b; text = `${a} − ${b}`;
+      break;
+    case '×': {
+      const cap = Math.min(4 + level, 12);
+      a = ri(2, cap); b = ri(2, cap);
+      answer = a * b; text = `${a} × ${b}`;
+      break;
+    }
+    case '÷': {
+      const cap = Math.min(3 + level, 12);
+      b = ri(2, cap); answer = ri(2, cap); a = b * answer;
+      text = `${a} ÷ ${b}`;
+      break;
+    }
+  }
+  return { text, answer };
+}
+
+function makeOptions(answer, count) {
+  const set = new Set([answer]);
+  let guard = 0;
+
+  while (set.size < count && guard++ < 800) {
+    const spread = Math.max(3, Math.round(answer * 0.35) + 2);
+    const delta  = ri(1, spread);
+    let v = answer + (Math.random() < 0.5 ? -delta : delta);
+    if (v < 0) v = answer + delta;
+    if (v === answer || v < 0) continue;
+    set.add(v);
+  }
+
+  let n = answer + 1;
+  while (set.size < count) set.add(n++);
+
+  const arr = [...set];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ============================================================
+   LAYOUT HELPERS
+   ============================================================ */
+function spreadAt(z) {
+  const dist  = Math.max(camera.position.z - z, 1);
+  const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist;
+  const halfW = halfH * camera.aspect;
+  return Math.min(halfW * 0.78, 13);
+}
+
+function computeLayoutScale() {
+  const spread = spreadAt(3);
+  const slotW  = (spread * 2) / ORB_COUNT;
+  const maxR   = slotW * 0.45;
+  return THREE.MathUtils.clamp(maxR / ORB_RADIUS, 0.34, 1);
+}
+
+function easeOutBack(x) {
+  const c1 = 1.70158, c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+
+/* ============================================================
+   HUD
+   ============================================================ */
+const el = {
+  hud:      document.getElementById('hud'),
+  score:    document.getElementById('score'),
+  level:    document.getElementById('level'),
+  lives:    document.getElementById('lives'),
+  question: document.getElementById('question'),
+  combo:    document.getElementById('combo'),
+  barFill:  document.getElementById('barFill'),
+  overlay:  document.getElementById('overlay'),
+  panel:    document.getElementById('panel'),
+};
+
+function updateHUD() {
+  el.score.textContent = state.score;
+  el.level.textContent = state.level;
+
+  el.lives.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart' + (i >= state.lives ? ' dead' : '');
+    el.lives.appendChild(h);
+  }
+
+  if (state.combo >= 3) {
+    el.combo.textContent =
+      `Combo ×${Math.min(1 + Math.floor(state.combo / 3), 5)} · ${state.combo} in a row`;
+    el.combo.classList.add('on');
+  } else {
+    el.combo.classList.remove('on');
+  }
+}
+
+function updateBar() {
+  let p = 1;
+  if (state.phase === 'question')       p = 1 - state.roundT / state.roundDuration;
+  else if (state.phase === 'resolving') p = 0;
+
+  p = THREE.MathUtils.clamp(p, 0, 1);
+  el.barFill.style.transform = `scaleX(${p})`;
+  el.barFill.classList.toggle('low', p < 0.32);
+}
+
+function popText(x, y, text, color) {
+  const d = document.createElement('div');
+  d.className = 'pop';
+  d.textContent = text;
+  d.style.left  = x + 'px';
+  d.style.top   = y + 'px';
+  d.style.color = color;
+  document.body.appendChild(d);
+  d.addEventListener('animationend', () => d.remove());
+}
+
+function flashScreen() {
+  const d = document.createElement('div');
+  d.className = 'flash';
+  document.body.appendChild(d);
+  d.addEventListener('animationend', () => d.remove());
+}
+
+/* ============================================================
+   ROUND FLOW
+   ============================================================ */
+function resetOrb(orb, value, colorHex) {
+  orb.value   = value;
+  orb.mode    = 'idle';
+  orb.shakeX  = 0;
+  orb.hovered = false;
+  orb.baseScale = state.layoutScale;
+
+  orb.group.visible = true;
+  orb.group.scale.setScalar(0.0001);
+  orb.group.position.set(0, 0, -22);
+
+  orb.mat.color.setHex(colorHex);
+  orb.mat.emissive.setHex(colorHex);
+  orb.mat.emissiveIntensity = 0.4;
+  orb.mat.opacity = 1;
+
+  orb.shellMat.color.setHex(colorHex);
+  orb.shellMat.opacity = 0.20;
+
+  orb.haloMat.color.setHex(colorHex);
+  orb.haloMat.opacity = 0.42;
+
+  orb.labelMat.opacity = 1;
+  orb.labelMat.map.dispose();
+  orb.labelMat.map = makeLabelTexture(String(value));
+  orb.labelMat.needsUpdate = true;
+}
+
+function startRound() {
+  const prevLevel = state.level;
+  state.level = 1 + Math.floor(state.correctCount / 4);
+
+  if (state.level > prevLevel) {
+    sfxLevel();
+    popText(window.innerWidth / 2, window.innerHeight * 0.33,
+            `LEVEL ${state.level}`, '#FFA35C');
+  }
+
+  const q = generateQuestion(state.level);
+  state.answer = q.answer;
+
+  const values = makeOptions(q.answer, ORB_COUNT);
+  state.layoutScale = computeLayoutScale();
+
+  for (let i = 0; i < ORB_COUNT; i++) {
+    resetOrb(orbs[i], values[i], PALETTE[i % PALETTE.length]);
+  }
+
+  el.question.textContent = q.text + ' = ?';
+  el.question.classList.remove('good', 'bad');
+
+  state.roundDuration = Math.max(5.2, 11 - state.level * 0.55);
+  state.roundT  = 0;
+  state.chosen  = null;
+  state.phase   = 'question';
+  state.phaseT  = 0;
+
+  updateHUD();
+}
+
+function resolveRound(isCorrect, chosenOrb, clickX, clickY) {
+  if (state.phase !== 'question') return;
+
+  state.phase = 'resolving';
+  state.phaseT = 0;
+  state.resolveCorrect = isCorrect;
+  state.chosen = chosenOrb;
+
+  if (isCorrect) {
+    state.combo++;
+    state.bestCombo = Math.max(state.bestCombo, state.combo);
+    state.correctCount++;
+
+    const timeBonus = 1 - state.roundT / state.roundDuration;
+    const mult = Math.min(1 + Math.floor(state.combo / 3), 5);
+    const pts  = Math.round((10 + timeBonus * 10) * mult);
+    state.score += pts;
+
+    const wp = new THREE.Vector3();
+    chosenOrb.group.getWorldPosition(wp);
+
+    const col = new THREE.Color();
+    col.setHex(PALETTE[chosenOrb.index % PALETTE.length]);
+    burst(wp, col, 62, 9);
+
+    chosenOrb.mode = 'explode';
+    orbs.forEach(o => { if (o !== chosenOrb) o.mode = 'idle'; });
+
+    el.question.classList.add('good');
+    sfxCorrect(state.combo);
+
+    if (clickX !== undefined) {
+      popText(clickX, clickY, `+${pts}${mult > 1 ? ' ×' + mult : ''}`, '#7DFFBF');
+    }
+  } else {
+    state.combo = 0;
+    state.lives--;
+    state.shake = 1;
+
+    if (chosenOrb) {
+      chosenOrb.mode = 'wrong';
+      const wp = new THREE.Vector3();
+      chosenOrb.group.getWorldPosition(wp);
+      burst(wp, new THREE.Color(0xEF4444), 28, 5.5);
+    }
+
+    const correctOrb = orbs.find(o => o.value === state.answer);
+    if (correctOrb) correctOrb.mode = 'reveal';
+
+    el.question.textContent =
+      el.question.textContent.replace(' = ?', '') + ' = ' + state.answer;
+    el.question.classList.add('bad');
+
+    flashScreen();
+    sfxWrong();
+  }
+
+  updateHUD();
+}
+
+function timeUp() {
+  state.phase  = 'resolving';
+  state.phaseT = 0;
+  state.resolveCorrect = false;
+  state.chosen = null;
+  state.combo  = 0;
+  state.lives--;
+  state.shake  = 0.7;
+
+  const correctOrb = orbs.find(o => o.value === state.answer);
+  if (correctOrb) correctOrb.mode = 'reveal';
+  orbs.forEach(o => { if (o !== correctOrb) o.mode = 'idle'; });
+
+  el.question.textContent =
+    el.question.textContent.replace(' = ?', '') + ' = ' + state.answer;
+  el.question.classList.add('bad');
+
+  flashScreen();
+  sfxWrong();
+  updateHUD();
+}
+
+function gameOver() {
+  state.phase  = 'gameover';
+  state.phaseT = 0;
+  orbs.forEach(o => { o.group.visible = false; });
+
+  const grade =
+    state.score >= 700 ? { t: 'Masterful',       d: 'Your mental arithmetic is razor sharp.' } :
+    state.score >= 400 ? { t: 'Excellent',       d: 'Strong calculation speed and accuracy.' } :
+    state.score >= 200 ? { t: 'Solid Work',      d: "You're getting faster — keep the streak alive." } :
+                         { t: 'Keep Going',      d: 'Speed comes with repetition. Try again.' };
+
+  showPanel(`
+    ${WORDMARK_HTML}
+    <h1>${grade.t}<span>${state.score} Points</span></h1>
+    <div class="stats-grid">
+      <div><span class="k">Level</span><span class="v">${state.level}</span></div>
+      <div><span class="k">Best Combo</span><span class="v">${state.bestCombo}</span></div>
+      <div><span class="k">Correct</span><span class="v">${state.correctCount}</span></div>
+    </div>
+    <p>${grade.d}</p>
+    <button id="playBtn">Play Again</button>
+    <div class="hint">Press Enter or Space</div>
+  `);
+
+  document.getElementById('playBtn').addEventListener('click', () => {
+    initAudio();
+    startGame();
+  });
+}
+
+/* ============================================================
+   OVERLAY
+   ============================================================ */
+function showPanel(html) {
+  el.panel.innerHTML = html;
+  el.overlay.classList.remove('hidden');
+}
+function hidePanel() {
+  el.overlay.classList.add('hidden');
+}
+
+function showStart() {
+  state.phase = 'menu';
+  orbs.forEach(o => { o.group.visible = false; });
+
+  updateHUD();
+  el.barFill.style.transform = 'scaleX(1)';
+  el.question.textContent = 'MATH BLASTER 3D';
+  el.question.classList.remove('good', 'bad');
+  el.combo.classList.remove('on');
+
+  showPanel(`
+    ${WORDMARK_HTML}
+    <h1>Math Blaster<span>3D</span></h1>
+    <p>Four crystals fly toward you. Only one carries the right answer.
+       Pick it before the timer empties — chain combos, climb levels, stay alive.</p>
+
+    <div class="features">
+      <div class="feature"><b>4</b>Crystals</div>
+      <div class="feature"><b>×5</b>Max Combo</div>
+      <div class="feature"><b>3</b>Lives</div>
+    </div>
+
+    <button id="playBtn">Play</button>
+    <div class="hint">Click or tap the correct crystal</div>
+  `);
+
+  document.getElementById('playBtn').addEventListener('click', () => {
+    initAudio();
+    startGame();
+  });
+}
+
+function startGame() {
+  hidePanel();
+  el.hud.classList.add('on');
+
+  state.level        = 1;
+  state.score        = 0;
+  state.lives        = 3;
+  state.combo        = 0;
+  state.bestCombo    = 0;
+  state.correctCount = 0;
+  state.shake        = 0;
+
+  startRound();
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+function updatePointer(e) {
+  const rect = canvas.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  pointer.x =  ((cx - rect.left) / rect.width)  * 2 - 1;
+  pointer.y = -((cy - rect.top)  / rect.height) * 2 + 1;
+  return { x: cx, y: cy };
+}
+
+function pickOrb() {
+  if (state.phase !== 'question') return null;
+  raycaster.setFromCamera(pointer, camera);
+
+  const targets = [];
+  for (const o of orbs) {
+    if (o.group.visible) targets.push(o.hit, o.label);
+  }
+
+  const hits = raycaster.intersectObjects(targets, false);
+  if (!hits.length) return null;
+  return hits[0].object.userData.orb || null;
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  initAudio();
+  if (state.phase !== 'question') return;
+
+  const pos = updatePointer(e);
+  const orb = pickOrb();
+  if (!orb) return;
+
+  resolveRound(orb.value === state.answer, orb, pos.x, pos.y);
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (state.phase !== 'question') {
+    for (const o of orbs) o.hovered = false;
+    canvas.style.cursor = 'crosshair';
+    return;
+  }
+  updatePointer(e);
+  const orb = pickOrb();
+  for (const o of orbs) o.hovered = (o === orb);
+  canvas.style.cursor = orb ? 'pointer' : 'crosshair';
+});
+
+canvas.addEventListener('pointerleave', () => {
+  for (const o of orbs) o.hovered = false;
+});
+
+window.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') &&
+      (state.phase === 'menu' || state.phase === 'gameover')) {
+    const btn = document.getElementById('playBtn');
+    if (btn) { initAudio(); startGame(); }
+  }
+});
+
+/* ============================================================
+   ORB UPDATE
+   ============================================================ */
+function applyOrbOpacity(orb, o) {
+  o = THREE.MathUtils.clamp(o, 0, 1);
+  orb.mat.opacity      = o;
+  orb.shellMat.opacity = 0.20 * o;
+  orb.haloMat.opacity  = 0.42 * o;
+  orb.labelMat.opacity = o;
+}
+
+function updateOrbs(dt, time) {
+  for (let i = 0; i < orbs.length; i++) {
+    const orb = orbs[i];
+    if (!orb.group.visible) continue;
+
+    orb.mesh.rotation.y  += dt * 0.70;
+    orb.mesh.rotation.x  += dt * 0.32;
+    orb.shell.rotation.y -= dt * 0.50;
+    orb.shell.rotation.z += dt * 0.36;
+
+    let scale   = orb.baseScale;
+    let opacity = 1;
+    orb.shakeX  = 0;
+
+    if (state.phase === 'question') {
+      const p = state.roundT / state.roundDuration;
+      const z = THREE.MathUtils.lerp(-18, 3, p);
+
+      const spread = spreadAt(z);
+      const step   = (spread * 2) / ORB_COUNT;
+
+      orb.group.position.x = -spread + step * (i + 0.5);
+      orb.group.position.y = Math.sin(time * 1.8 + i * 1.35) * 0.45;
+      orb.group.position.z = z;
+
+      const st = Math.min(state.roundT / 0.35, 1);
+      scale = orb.baseScale * easeOutBack(st);
+
+      orb.haloMat.opacity = 0.32 + Math.sin(time * 3 + i) * 0.08;
+
+      if (orb.hovered) scale *= 1.14;
+
+    } else if (state.phase === 'resolving') {
+      const t = state.phaseT;
+
+      if (orb.mode === 'explode') {
+        const e = Math.min(t / 0.48, 1);
+        scale   = orb.baseScale * (1 + e * 2.4);
+        opacity = 1 - e;
+        orb.mesh.rotation.y  += dt * 9;
+        orb.shell.rotation.x += dt * 7;
+        if (e >= 1) { orb.group.visible = false; continue; }
+
+      } else if (orb.mode === 'wrong') {
+        const e = Math.min(t / 0.55, 1);
+        orb.shakeX = Math.sin(t * 58) * 0.28 * (1 - e);
+        orb.mat.emissive.setHex(0xEF4444);
+        orb.mat.emissiveIntensity = 0.9 * (1 - e * 0.5);
+        orb.shellMat.color.setHex(0xEF4444);
+        scale = orb.baseScale * (1 + Math.sin(t * 42) * 0.07 * (1 - e));
+
+      } else if (orb.mode === 'reveal') {
+        orb.mat.emissive.setHex(0x22C55E);
+        orb.mat.emissiveIntensity = 0.65 + Math.sin(t * 13) * 0.3;
+        orb.shellMat.color.setHex(0x22C55E);
+        orb.haloMat.color.setHex(0x22C55E);
+        scale = orb.baseScale * (1 + Math.sin(t * 9) * 0.07);
+      }
+
+      const fo = THREE.MathUtils.clamp((t - 0.88) / 0.42, 0, 1);
+      if (fo > 0) {
+        scale   *= (1 - fo);
+        opacity *= (1 - fo);
+        if (fo >= 1) { orb.group.visible = false; continue; }
+      }
+    }
+
+    orb.group.scale.setScalar(Math.max(scale, 0.0001));
+    orb.group.position.x += orb.shakeX;
+    applyOrbOpacity(orb, opacity);
+  }
+}
+
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
+let lastTime = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  state.time   += dt;
+  state.phaseT += dt;
+
+  const time = state.time;
+
+  stars.rotation.y += dt * 0.0075;
+  stars.rotation.x += dt * 0.0025;
+  grid.position.z   = ((time * 2.2) % 10) - 5;
+
+  rimOrange.position.x = Math.sin(time * 0.50) * 18;
+  rimBlue.position.x   = Math.cos(time * 0.42) * 18;
+
+  if (state.phase === 'question') {
+    state.roundT += dt;
+    if (state.roundT >= state.roundDuration) timeUp();
+  }
+
+  if (state.phase === 'resolving' && state.phaseT > 1.42) {
+    if (state.lives <= 0) gameOver();
+    else startRound();
+  }
+
+  updateOrbs(dt, time);
+  updateParticles(dt);
+  updateBar();
+
+  state.shake = Math.max(0, state.shake - dt * 2.6);
+  const sh = state.shake * state.shake;
+
+  camera.position.set(
+    Math.sin(time * 0.35) * 0.35 + (Math.random() - 0.5) * sh * 1.4,
+    Math.cos(time * 0.50) * 0.22 + (Math.random() - 0.5) * sh * 1.4,
+    CAM_BASE.z + (Math.random() - 0.5) * sh * 0.7
+  );
+  camera.lookAt(0, 0, -6);
+
+  renderer.render(scene, camera);
+}
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
+function onResize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  state.layoutScale = computeLayoutScale();
+  for (const o of orbs) o.baseScale = state.layoutScale;
+}
+window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', () => setTimeout(onResize, 120));
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+state.layoutScale = computeLayoutScale();
+showStart();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
