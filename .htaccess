@@ -1,0 +1,17 @@
+# Clean URLs: serve /games from games.html, and send /games.html to /games
+RewriteEngine On
+
+# /index.html -> /
+RewriteCond %{THE_REQUEST} \s/index\.html[\s?]
+RewriteRule ^index\.html$ / [R=301,L]
+
+# /something.html -> /something (permanent redirect)
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?]
+RewriteRule ^ /%1 [R=301,L]
+
+# /something -> serve something.html
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+ErrorDocument 404 /404.html
