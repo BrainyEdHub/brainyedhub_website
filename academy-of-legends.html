@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>BrainyEdHub: The Academy of Legends</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden;background:#031E3D;color:#fff;user-select:none;-webkit-user-select:none}
+#game-canvas,#particle-canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none}
+#game-canvas{background:#0a1a2e;pointer-events:auto}
+.hidden{display:none!important}
+#hud{position:fixed;inset:0 0 auto 0;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10}
+.hud-panel{background:rgba(3,30,61,.85);border:2px solid #EF5C11;border-radius:8px;padding:10px 14px;backdrop-filter:blur(8px);pointer-events:auto}
+.hud-left{display:flex;flex-direction:column;gap:8px}
+.hud-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.hud-name{font-weight:700;font-size:14px;color:#EF5C11}
+.hud-level{font-size:12px;opacity:.9}
+.bar{width:180px;height:8px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;margin-top:4px}
+.bar>div{height:100%;transition:width .4s}
+#hud-xp{background:linear-gradient(90deg,#EF5C11,#FFA366)}
+#hud-hp{background:linear-gradient(90deg,#d43f3f,#ff6b6b)}
+.hud-btn{font-size:11px;opacity:.9;cursor:pointer;padding:6px 10px}
+.hud-btn:hover{opacity:1;background:rgba(239,92,17,.2)}
+#quest-tracker{position:fixed;top:130px;left:16px;max-width:240px;background:rgba(3,30,61,.9);border-left:3px solid #EF5C11;border-radius:6px;padding:10px 14px;font-size:12px;z-index:12;pointer-events:none;display:none}
+#quest-tracker.show{display:block}
+#quest-tracker .title{color:#EF5C11;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:4px}
+#quest-tracker .qname{font-weight:700;margin-bottom:4px}
+#quest-tracker .obj{opacity:.85;line-height:1.4;padding-left:14px;position:relative}
+#quest-tracker .obj::before{content:'○';position:absolute;left:0}
+#quest-tracker .obj.done::before{content:'✓';color:#4CAF50;font-weight:700}
+#quest-tracker .obj.done{opacity:.5;text-decoration:line-through}
+#minimap{position:fixed;bottom:20px;right:110px;width:130px;height:130px;background:rgba(3,30,61,.85);border:2px solid #EF5C11;border-radius:10px;z-index:12;display:none;overflow:hidden}
+#minimap.show{display:block}
+#minimap canvas{width:100%;height:100%;display:block}
+#interact-prompt{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);background:rgba(3,30,61,.9);border:2px solid #EF5C11;padding:10px 20px;border-radius:8px;font-size:14px;z-index:15;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,92,17,.5)}50%{box-shadow:0 0 0 8px rgba(239,92,17,0)}}
+.key-hint{display:inline-block;background:#EF5C11;color:#fff;padding:2px 8px;border-radius:4px;font-weight:700;margin-right:6px;font-size:12px;font-family:monospace}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#031E3D,#0a2d52);z-index:100;padding:20px;overflow-y:auto}
+.screen h1{font-size:clamp(24px,5vw,48px);color:#EF5C11;text-align:center;margin-bottom:8px}
+.screen h2{font-size:clamp(16px,3vw,22px);font-weight:400;text-align:center;margin-bottom:32px;opacity:.9}
+.tagline{color:#EF5C11;font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.btn{background:#EF5C11;color:#fff;border:none;padding:14px 32px;font-size:16px;font-weight:700;border-radius:8px;cursor:pointer;transition:all .2s;margin:6px;font-family:inherit}
+.btn:hover{background:#ff6f24;transform:translateY(-2px);box-shadow:0 8px 20px rgba(239,92,17,.4)}
+.btn.secondary{background:transparent;border:2px solid #EF5C11;color:#EF5C11}
+.btn.secondary:hover{background:rgba(239,92,17,.15)}
+.btn.small{padding:8px 18px;font-size:13px}
+.input-field{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);color:#fff;padding:12px 16px;font-size:16px;border-radius:8px;width:280px;max-width:100%;font-family:inherit;outline:none}
+.input-field:focus{border-color:#EF5C11;box-shadow:0 0 20px rgba(239,92,17,.3)}
+#char-name{font-size:20px;text-align:center;letter-spacing:1px;font-weight:600}
+.class-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;max-width:720px;width:100%;margin:20px 0}
+.class-card{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:10px;padding:16px 12px;cursor:pointer;transition:all .2s;text-align:center}
+.class-card:hover{border-color:rgba(239,92,17,.5);background:rgba(255,255,255,.1)}
+.class-card.selected{border-color:#EF5C11;background:rgba(239,92,17,.15)}
+.class-icon{font-size:32px;margin-bottom:6px}
+.class-name{font-weight:700;font-size:14px;color:#EF5C11;margin-bottom:4px}
+.class-desc{font-size:11px;opacity:.75;line-height:1.3}
+.customizer{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
+.color-swatch.selected{border-color:#EF5C11;transform:scale(1.15)}
+#dialogue{position:fixed;bottom:0;left:0;right:0;padding:20px;z-index:50;display:flex;justify-content:center;pointer-events:none}
+.dialogue-box{background:rgba(3,30,61,.96);border:2px solid #EF5C11;border-radius:12px;padding:20px 24px;max-width:720px;width:100%;pointer-events:auto;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.dialogue-speaker{color:#EF5C11;font-weight:700;font-size:14px;margin-bottom:6px}
+.dialogue-text{font-size:15px;line-height:1.5;margin-bottom:16px}
+.dialogue-choices{display:flex;flex-direction:column;gap:8px}
+.dialogue-choice{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#fff;text-align:left;padding:10px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:14px;transition:all .15s}
+.dialogue-choice:hover{background:rgba(239,92,17,.2);border-color:#EF5C11;transform:translateX(4px)}
+#puzzle,#combat,#skilltree,#achievements,#portals,#settings,#intro,#bounties,#companion-name{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;display:flex;justify-content:center;align-items:center;padding:20px}
+.modal-box{background:#031E3D;border:2px solid #EF5C11;border-radius:12px;padding:24px;padding-top:52px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative}
+.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:2px solid rgba(239,92,17,.5);color:#EF5C11;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+.modal-close:hover{background:rgba(239,92,17,.2);border-color:#EF5C11;transform:scale(1.05)}
+.modal-box h2{color:#EF5C11;margin-bottom:16px;font-size:22px}
+.modal-title{color:#EF5C11;font-weight:700;margin-bottom:12px;font-size:16px}
+.modal-question{font-size:16px;line-height:1.5;margin-bottom:16px}
+.modal-display{background:rgba(0,0,0,.3);padding:16px;border-radius:8px;text-align:center;font-size:20px;font-weight:600;letter-spacing:2px;margin-bottom:16px;font-family:'Courier New',monospace;line-height:1.6}
+.modal-feedback{margin-top:12px;padding:12px;border-radius:6px;font-size:14px;line-height:1.4}
+.modal-feedback.correct{background:rgba(76,175,80,.15);border-left:3px solid #4CAF50}
+.modal-feedback.wrong{background:rgba(244,67,54,.15);border-left:3px solid #F44336}
+.modal-feedback.info{background:rgba(239,92,17,.15);border-left:3px solid #EF5C11}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.modal-hint{font-size:11px;opacity:.5;margin-right:auto;padding:8px 0}
+#journal{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:rgba(3,30,61,.97);border-left:2px solid #EF5C11;padding:20px;overflow-y:auto;z-index:40;transform:translateX(100%);transition:transform .3s}
+#journal.open{transform:translateX(0)}
+#journal h3{color:#EF5C11;margin-bottom:16px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+#journal h3 span{cursor:pointer;font-size:20px;opacity:.7}
+#journal h3 span:hover{opacity:1}
+.quest-entry{background:rgba(255,255,255,.05);border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:3px solid #EF5C11}
+.quest-entry.completed{border-left-color:#4CAF50;opacity:.65}
+.quest-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.quest-region{font-size:10px;letter-spacing:1px;opacity:.5;margin-bottom:4px;text-transform:uppercase}
+.quest-desc{font-size:12px;opacity:.8;line-height:1.4}
+.quest-objective{font-size:12px;margin-top:6px;padding-left:8px}
+.quest-objective.done::before{content:'✓ ';color:#4CAF50;font-weight:700}
+.quest-objective.pending::before{content:'○ ';opacity:.6}
+#toast-container{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;pointer-events:none;align-items:center}
+.toast{background:rgba(3,30,61,.95);border:2px solid #EF5C11;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;animation:slideDown .3s ease,fadeOut .3s ease 2.7s forwards;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:90vw;text-align:center}
+.toast.achievement{border-color:#FFD700;background:linear-gradient(135deg,rgba(3,30,61,.95),rgba(70,50,10,.95))}
+.toast.bounty{border-color:#4CAF50}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{to{opacity:0;transform:translateY(-10px)}}
+#flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(239,92,17,.35),transparent 70%);pointer-events:none;opacity:0;z-index:70;transition:opacity .2s}
+#flash.show{opacity:1}
+#touch-controls{position:fixed;bottom:20px;left:20px;z-index:20;display:none}
+#touch-controls.visible{display:block}
+.joystick-base{width:120px;height:120px;background:rgba(255,255,255,.08);border:2px solid rgba(239,92,17,.5);border-radius:50%;position:relative;touch-action:none}
+.joystick-knob{width:50px;height:50px;background:rgba(239,92,17,.8);border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+#touch-interact{position:fixed;bottom:40px;right:30px;width:70px;height:70px;background:rgba(239,92,17,.85);border:2px solid #EF5C11;border-radius:50%;color:#fff;font-weight:700;font-size:12px;z-index:20;display:none;cursor:pointer;font-family:inherit}
+#touch-interact.visible{display:block}
+#region-banner{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:30;pointer-events:none;opacity:0;transition:opacity .5s}
+#region-banner.show{opacity:1}
+#region-banner h2{font-size:clamp(24px,5vw,42px);color:#EF5C11;letter-spacing:3px}
+#region-banner p{font-size:14px;letter-spacing:2px;opacity:.8;margin-top:6px}
+.region-tile{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.region-tile:hover{border-color:#EF5C11;background:rgba(239,92,17,.1)}
+.region-tile.locked{opacity:.4;cursor:not-allowed}
+.region-tile-name{font-weight:700;font-size:15px;margin-bottom:4px}
+.region-tile-desc{font-size:12px;opacity:.8}
+.region-tile-subject{font-size:10px;color:#EF5C11;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.skill-branch{margin-bottom:14px}
+.skill-branch-title{color:#EF5C11;font-weight:700;font-size:13px;letter-spacing:1px;margin-bottom:6px}
+.skill-row{display:flex;gap:8px;flex-wrap:wrap}
+.skill-node{flex:1;min-width:120px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.2);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s}
+.skill-node:hover{border-color:rgba(239,92,17,.6)}
+.skill-node.unlocked{border-color:#4CAF50;background:rgba(76,175,80,.12)}
+.skill-node.locked{opacity:.55;cursor:not-allowed}
+.skill-node-name{font-weight:700;font-size:12px;margin-bottom:2px}
+.skill-node-desc{font-size:10px;opacity:.8;line-height:1.3}
+.mastery-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.mastery-label{width:90px;opacity:.85}
+.mastery-bar{flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.mastery-fill{height:100%;background:linear-gradient(90deg,#EF5C11,#FFA366);transition:width .4s}
+.mastery-val{width:32px;text-align:right;opacity:.7}
+.combat-hp-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}
+.combat-hp-bar{height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin-bottom:16px}
+.combat-hp-fill{height:100%;transition:width .4s}
+.combo-tag{display:inline-block;background:linear-gradient(135deg,#EF5C11,#FFD700);color:#031E3D;font-weight:900;padding:3px 10px;border-radius:14px;font-size:12px;margin-left:8px;animation:comboPulse .4s ease}
+@keyframes comboPulse{0%{transform:scale(1.3)}100%{transform:scale(1)}}
+#combat-scene{width:100%;height:180px;background:linear-gradient(180deg,#0a1a2e,#1a2a4e);border-radius:8px;border:1px solid rgba(239,92,17,.3);margin-bottom:16px;display:block}
+.boss-banner{background:linear-gradient(90deg,transparent,rgba(255,0,0,.9),transparent);padding:8px;text-align:center;font-weight:900;letter-spacing:3px;color:#FFD700;animation:bossPulse .6s ease}
+@keyframes bossPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.achievement{display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.04);margin-bottom:8px}
+.achievement.locked{opacity:.4}
+.achievement-icon{font-size:24px}
+.achievement-name{font-weight:700;font-size:13px}
+.achievement-desc{font-size:11px;opacity:.8}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.settings-row:last-child{border-bottom:none}
+.toggle{position:relative;width:44px;height:24px;background:rgba(255,255,255,.15);border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle.on{background:#EF5C11}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(20px)}
+.bounty-card{background:rgba(255,255,255,.06);border-left:3px solid #4CAF50;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.bounty-title{font-weight:700;font-size:14px;color:#4CAF50;margin-bottom:4px}
+.bounty-prog{font-size:12px;opacity:.8}
+.bounty-done{background:rgba(76,175,80,.15);border-left-color:#FFD700;opacity:.7}
+.intro-card{background:#031E3D;border:2px solid #EF5C11;border-radius:12px;padding:40px;max-width:520px;text-align:center}
+.intro-card h2{color:#EF5C11;font-size:26px;margin-bottom:16px}
+.intro-card p{font-size:15px;line-height:1.6;opacity:.9;margin-bottom:20px}
+.intro-dots{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.intro-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}
+.intro-dot.active{background:#EF5C11}
+#arrow-hint{position:fixed;pointer-events:none;z-index:14;font-size:32px;animation:arrowBob 1s infinite}
+@keyframes arrowBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media(max-width:700px){.bar{width:120px}#journal{width:100%;max-width:100%}.skill-node{min-width:100px}#minimap{width:100px;height:100px;right:100px}#quest-tracker{max-width:160px;font-size:11px;top:120px}#combat-scene{height:140px}}
+</style>
+</head>
+<body>
+
+<canvas id="game-canvas"></canvas>
+<canvas id="particle-canvas"></canvas>
+<div id="flash"></div>
+<div id="arrow-hint" class="hidden">⬇️</div>
+
+<div id="region-banner"><h2 id="region-name">ACADEMY CAPITAL</h2><p id="region-sub">The Hub of Aetheria</p></div>
+
+<div id="hud" class="hidden">
+<div class="hud-left">
+<div class="hud-panel">
+<div class="hud-name" id="hud-name">Adventurer</div>
+<div class="hud-level">Level <span id="hud-level">1</span> · <span id="hud-class">Arcanist</span></div>
+<div class="bar"><div id="hud-xp" style="width:0%"></div></div>
+<div class="bar"><div id="hud-hp" style="width:100%"></div></div>
+</div>
+</div>
+<div class="hud-right">
+<div class="hud-panel" style="font-size:13px;font-weight:600">💎 <span id="hud-shards">0</span> · ⭐ <span id="hud-sp">0</span></div>
+<div class="hud-panel hud-btn" id="btn-bounties">📋 Bounties [B]</div>
+<div class="hud-panel hud-btn" id="btn-journal">📜 Journal [Q]</div>
+<div class="hud-panel hud-btn" id="btn-portals">🌀 Portals [P]</div>
+<div class="hud-panel hud-btn" id="btn-skills">🌳 Skills [K]</div>
+<div class="hud-panel hud-btn" id="btn-achievements">🏆 [L]</div>
+<div class="hud-panel hud-btn" id="btn-settings">⚙️ [O]</div>
+</div>
+</div>
+
+<div id="quest-tracker"><div class="title">CURRENT QUEST</div><div id="qt-content"></div></div>
+<div id="minimap"><canvas id="minimap-canvas" width="130" height="130"></canvas></div>
+<div id="interact-prompt" class="hidden"><span class="key-hint">SPACE</span><span id="interact-text">Interact</span></div>
+
+<div id="dialogue" class="hidden">
+<div class="dialogue-box">
+<div class="dialogue-speaker" id="dialogue-speaker">Speaker</div>
+<div class="dialogue-text" id="dialogue-text">Text</div>
+<div class="dialogue-choices" id="dialogue-choices"></div>
+</div>
+</div>
+
+<div id="puzzle" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="puzzle">✕</button>
+<div class="modal-title" id="puzzle-title">PUZZLE</div>
+<div class="modal-question" id="puzzle-question">Question</div>
+<div class="modal-display" id="puzzle-sequence"></div>
+<input type="text" class="input-field" id="puzzle-input" placeholder="Your answer..." autocomplete="off" spellcheck="false" style="width:100%">
+<div class="modal-feedback hidden" id="puzzle-feedback"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" id="puzzle-hint">💡 Hint</button><button class="btn small" id="puzzle-submit">Submit</button></div>
+</div></div>
+
+<div id="combat" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="combat">✕</button>
+<div class="modal-title" id="combat-title">⚔️ COMBAT</div>
+<canvas id="combat-scene" width="480" height="180"></canvas>
+<div class="combat-hp-row"><span id="combat-enemy-name">Enemy</span><span id="combat-enemy-hp">HP 100/100</span></div>
+<div class="combat-hp-bar"><div class="combat-hp-fill" id="combat-enemy-fill" style="width:100%;background:linear-gradient(90deg,#d43f3f,#ff6b6b)"></div></div>
+<div class="combat-hp-row"><span>You <span id="combat-combo"></span></span><span id="combat-player-hp">HP 100/100</span></div>
+<div class="combat-hp-bar"><div class="combat-hp-fill" id="combat-player-fill" style="width:100%;background:linear-gradient(90deg,#4CAF50,#8bc34a)"></div></div>
+<div class="modal-question" id="combat-question">Answer correctly to strike!</div>
+<input type="text" class="input-field" id="combat-input" placeholder="Your answer..." autocomplete="off" spellcheck="false" style="width:100%">
+<div class="modal-feedback hidden" id="combat-feedback"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to flee</div><button class="btn secondary small" id="combat-flee">Flee</button><button class="btn small" id="combat-submit">Attack</button></div>
+</div></div>
+
+<div id="portals" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="portals">✕</button>
+<h2>🌀 Portal Chamber</h2>
+<div style="font-size:12px;opacity:.7;margin-bottom:16px">Travel between the regions of Aetheria.</div>
+<div id="portal-list"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" data-close="portals">Close</button></div>
+</div></div>
+
+<div id="skilltree" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="skilltree">✕</button>
+<h2>🌳 Skills & Mastery</h2>
+<div style="font-size:12px;opacity:.7;margin-bottom:16px">Skill points: <span id="skill-points" style="color:#EF5C11;font-weight:700">0</span></div>
+<div style="margin-bottom:20px"><div class="skill-branch-title">SUBJECT MASTERY</div><div id="mastery-content"></div></div>
+<div id="skill-content"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" data-close="skilltree">Close</button></div>
+</div></div>
+
+<div id="achievements" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="achievements">✕</button>
+<h2>🏆 Achievements</h2>
+<div id="achievement-content"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" data-close="achievements">Close</button></div>
+</div></div>
+
+<div id="bounties" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="bounties">✕</button>
+<h2>📋 Daily Bounties</h2>
+<div style="font-size:12px;opacity:.7;margin-bottom:16px">Resets each day. Complete all three for a bonus.</div>
+<div id="bounty-list"></div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" data-close="bounties">Close</button></div>
+</div></div>
+
+<div id="settings" class="hidden"><div class="modal-box">
+<button class="modal-close" data-close="settings">✕</button>
+<h2>⚙️ Settings</h2>
+<div class="settings-row"><div><div style="font-weight:700">Sound Effects</div><div style="font-size:11px;opacity:.7">Chimes, hits, pickups</div></div><div class="toggle" id="toggle-sound"></div></div>
+<div class="settings-row"><div><div style="font-weight:700">Ambient Music</div><div style="font-size:11px;opacity:.7">Slow melodies per region</div></div><div class="toggle" id="toggle-music"></div></div>
+<div class="settings-row"><div><div style="font-weight:700">Show Minimap</div><div style="font-size:11px;opacity:.7">Small overhead view</div></div><div class="toggle" id="toggle-minimap"></div></div>
+<div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)">
+<div style="font-size:12px;opacity:.7;margin-bottom:8px">Playtime: <span id="playtime">0m</span></div>
+<div style="font-size:12px;opacity:.7;margin-bottom:12px">Coins: <span id="coin-count">0</span> · Chests: <span id="chest-count">0</span></div>
+<button class="btn secondary small" id="btn-reset" style="background:rgba(244,67,54,.15);border-color:#F44336;color:#F44336">Reset All Progress</button>
+</div>
+<div class="modal-actions"><div class="modal-hint">ESC or ✕ to close</div><button class="btn secondary small" data-close="settings">Close</button></div>
+</div></div>
+
+<div id="companion-name" class="hidden"><div class="modal-box" style="max-width:460px;text-align:center">
+<h2>🐾 A Companion Appears!</h2>
+<div style="font-size:60px;margin:16px 0">🐱</div>
+<p style="font-size:14px;opacity:.85;line-height:1.5;margin-bottom:20px">A small cat has been following you. It seems to want to join your journey. What will you name it?</p>
+<input type="text" class="input-field" id="companion-input" placeholder="Companion name..." maxlength="16" autocomplete="off" spellcheck="false" style="text-align:center">
+<div class="modal-actions" style="justify-content:center;margin-top:20px">
+<button class="btn" id="companion-confirm">Name It</button>
+</div>
+</div></div>
+
+<div id="intro" class="hidden"><div class="intro-card">
+<h2 id="intro-title">The Great Forgetting</h2>
+<p id="intro-text">Long ago, Aetheria thrived on knowledge. Great crystals powered entire cities. Libraries held the sum of all human understanding.</p>
+<div class="intro-dots"><div class="intro-dot active"></div><div class="intro-dot"></div><div class="intro-dot"></div></div>
+<div style="margin-top:24px"><button class="btn" id="intro-next">Continue</button></div>
+</div></div>
+
+<div id="journal"><h3>📜 Quest Journal <span id="journal-close">✕</span></h3><div id="journal-content"></div></div>
+<div id="toast-container"></div>
+<div id="touch-controls"><div class="joystick-base" id="joystick"><div class="joystick-knob" id="joystick-knob"></div></div></div>
+<button id="touch-interact">TALK</button>
+
+<div id="screen-title" class="screen">
+<div class="tagline">BrainyEdHub Presents</div>
+<h1>THE ACADEMY OF LEGENDS</h1>
+<h2>Learn. Explore. Conquer. Become Legendary.</h2>
+<button class="btn" id="btn-begin">Begin Your Journey</button>
+<button class="btn secondary hidden" id="continue-btn">Continue</button>
+<div style="margin-top:32px;font-size:11px;opacity:.5;max-width:640px;text-align:center;line-height:1.5">
+8 regions · Quests · Combat · Skills · Achievements · Chests · Companion · Weather · Music · Bounties<br>
+WASD move · SPACE interact · B Bounties · Q Journal · P Portals · K Skills · L Achievements · O Settings
+</div>
+</div>
+
+<div id="screen-creation" class="screen hidden">
+<div class="tagline">Create Your Scholar</div>
+<h1 style="font-size:30px;margin-bottom:8px">WHO WILL YOU BECOME?</h1>
+<p style="font-size:13px;opacity:.7;margin-bottom:24px">Type your name below to begin your legend</p>
+<input type="text" class="input-field" id="char-name" placeholder="Your character's name..." maxlength="20" autocomplete="off" spellcheck="false">
+<div style="margin-top:20px;font-size:11px;letter-spacing:2px;opacity:.7">SKIN TONE</div>
+<div class="customizer" id="skin-picker"></div>
+<div style="font-size:11px;letter-spacing:2px;opacity:.7">HAIR COLOR</div>
+<div class="customizer" id="hair-picker"></div>
+<div style="font-size:11px;letter-spacing:2px;opacity:.7">OUTFIT COLOR</div>
+<div class="customizer" id="outfit-picker"></div>
+<div style="margin-top:16px;font-size:11px;letter-spacing:2px;opacity:.7">CHOOSE YOUR CLASS</div>
+<div class="class-grid" id="class-grid"></div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn secondary" id="btn-back">Back</button>
+<button class="btn" id="btn-confirm">Enter Aetheria</button>
+</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var SAVE_KEY='brainyedhub_save_v6';
+var SKIN_TONES=[0xf0c8a0,0xe0b088,0xc89070,0xa87050,0x805030,0x5a3820];
+var HAIR_COLORS=[0x2a1810,0x4a2818,0x8b5a2b,0xd4a574,0xf0e0a0,0xd43f3f,0x6a4cff,0xEF5C11,0x444444,0xaaaaaa];
+var OUTFIT_COLORS=[0x6a4cff,0xEF5C11,0x4caf50,0xffb347,0xd43f3f,0x2a5a7a,0x5a3a7a,0x2a7a5a,0xffffff,0x333333];
+var CLASSES=[
+{id:'Arcanist',icon:'🔮',desc:'Mathematical reasoning and complex puzzles',color:0x6a4cff},
+{id:'Wordsmith',icon:'📖',desc:'Language, storytelling, interpretation',color:0xEF5C11},
+{id:'Naturalist',icon:'🌿',desc:'Scientific experimentation and discovery',color:0x4caf50},
+{id:'Explorer',icon:'🧭',desc:'Geography, navigation, observation',color:0xffb347},
+{id:'Strategist',icon:'♟',desc:'Chess, coding, and tactical planning',color:0xd43f3f}
+];
+
+var REGIONS={
+academy:{name:'ACADEMY CAPITAL',sub:'The Hub of Aetheria',subject:'HUB',bg1:'#0a1a2e',ground:'#1e3a2a',path:'#3a2a1a',unlocked:true,music:'academy',
+buildings:[{x:-380,y:-240,w:220,h:160,c:'#2a5a7a',label:'📚 GRAND LIBRARY'},{x:380,y:-240,w:220,h:160,c:'#5a3a7a',label:'🌀 PORTAL CHAMBER'},{x:-380,y:260,w:220,h:160,c:'#7a5a2a',label:'⚒ CRAFTING HALL'},{x:380,y:260,w:220,h:160,c:'#2a7a5a',label:'📜 MISSION BOARD'}],
+npcs:['archivist','arith','codian','vex'],enemies:[]},
+numeria:{name:'KINGDOM OF NUMERIA',sub:'Realm of Mathematics',subject:'MATHEMATICS',bg1:'#2a1a3a',ground:'#2a1e40',path:'#4a3060',unlocked:false,music:'numeria',
+buildings:[{x:-320,y:-200,w:200,h:170,c:'#4a2a6a',label:'⛩️ TEMPLE OF NUMBERS'},{x:320,y:-200,w:200,h:150,c:'#5a3a7a',label:"🔷 GEOMETER'S FORGE"}],
+npcs:['numerian_sage'],enemies:[{id:'number_sprite',name:'Number Sprite',x:0,y:-380,hp:80,color:'#8866ff',subject:'mathematics',xp:100,tier:1,type:'sprite',wander:true},{id:'equation_golem',name:'Equation Golem',x:-200,y:-500,hp:170,color:'#aa88ff',subject:'mathematics',xp:220,tier:2,type:'golem'},{id:'geometry_titan',name:'Geometry Titan',x:220,y:-520,hp:280,color:'#c8a8ff',subject:'mathematics',xp:400,tier:3,type:'golem'}]},
+eloquentia:{name:'LIBRARY OF ELOQUENTIA',sub:'Sanctum of Words',subject:'ENGLISH',bg1:'#2a1520',ground:'#2a1828',path:'#4a2838',unlocked:false,music:'eloquentia',
+buildings:[{x:-320,y:-220,w:260,h:200,c:'#5a2a2a',label:'📖 HALL OF STORIES'},{x:320,y:-220,w:200,h:160,c:'#6a3a3a',label:"✒️ SCRIVENER'S WING"}],
+npcs:['librarian_ess'],enemies:[{id:'grammar_phantom',name:'Grammar Phantom',x:0,y:-380,hp:90,color:'#ff88cc',subject:'english',xp:110,tier:1,type:'phantom',wander:true},{id:'comma_wraith',name:'Comma Wraith',x:-200,y:-500,hp:180,color:'#ffaa88',subject:'english',xp:240,tier:2,type:'wraith'},{id:'syntax_serpent',name:'Syntax Serpent',x:220,y:-520,hp:290,color:'#ffccaa',subject:'english',xp:420,tier:3,type:'serpent'}]},
+chronicle:{name:'CHRONICLE KINGDOM',sub:'Where Time Remembers',subject:'HISTORY',bg1:'#1a1520',ground:'#221a15',path:'#3a2a20',unlocked:false,music:'chronicle',
+buildings:[{x:-340,y:-220,w:230,h:190,c:'#5a4030',label:'🏛️ GREAT ARCHIVE'},{x:340,y:-220,w:200,h:160,c:'#6a5040',label:'⏳ TIME VAULT'}],
+npcs:['chronicler_roy'],enemies:[{id:'chrono_warden',name:'Chrono Warden',x:0,y:-380,hp:100,color:'#ffcc66',subject:'history',xp:120,tier:1,type:'warden',wander:true},{id:'memory_keeper',name:'Memory Keeper',x:200,y:-520,hp:300,color:'#ffddaa',subject:'history',xp:430,tier:3,type:'warden'}]},
+atlas:{name:'ATLAS FRONTIER',sub:'Edge of the Known World',subject:'GEOGRAPHY',bg1:'#152a2a',ground:'#1e3a2e',path:'#3a5a4a',unlocked:false,music:'atlas',
+buildings:[{x:-340,y:-200,w:220,h:160,c:'#2a6a5a',label:"🗺️ CARTOGRAPHER'S HALL"},{x:340,y:-200,w:200,h:140,c:'#3a7a6a',label:'🧭 COMPASS TOWER'}],
+npcs:['ranger_kess'],enemies:[{id:'terrain_mimic',name:'Terrain Mimic',x:0,y:-380,hp:110,color:'#66aa88',subject:'geography',xp:130,tier:1,type:'mimic',wander:true},{id:'cartographer_ghost',name:'Cartographer Ghost',x:200,y:-520,hp:310,color:'#88ccaa',subject:'geography',xp:440,tier:3,type:'phantom'}]},
+quantum:{name:'QUANTUM WILDS',sub:'Where Nature Experiments',subject:'SCIENCE',bg1:'#0a2a2a',ground:'#0e3a2a',path:'#1a5a4a',unlocked:false,music:'quantum',
+buildings:[{x:-340,y:-220,w:220,h:180,c:'#1a5a4a',label:'🔬 OBSERVATORY'},{x:340,y:-220,w:200,h:160,c:'#2a6a5a',label:'⚗️ ALCHEMY LAB'}],
+npcs:['scientist_nyx'],enemies:[{id:'quantum_serpent',name:'Quantum Serpent',x:0,y:-380,hp:120,color:'#44ffaa',subject:'science',xp:140,tier:2,type:'serpent',wander:true},{id:'photosynthesis_beast',name:'Photosynthesis Beast',x:200,y:-520,hp:320,color:'#66ffbb',subject:'science',xp:450,tier:3,type:'golem'}]},
+binary:{name:'BINARY REALM',sub:'The Corrupted Dimension',subject:'CODING',bg1:'#0a1a20',ground:'#0c1e26',path:'#1a3a4a',unlocked:false,music:'binary',
+buildings:[{x:-340,y:-200,w:220,h:160,c:'#1a4a5a',label:'💾 LOGIC CORE'},{x:340,y:-200,w:200,h:160,c:'#2a5a6a',label:'⚙️ MACHINE WORKS'}],
+npcs:['programmer_axi'],enemies:[{id:'binary_overlord',name:'Binary Overlord',x:0,y:-380,hp:140,color:'#66ccff',subject:'coding',xp:160,tier:2,type:'overlord',wander:true},{id:'memory_leak',name:'Memory Leak',x:200,y:-520,hp:330,color:'#88ddff',subject:'coding',xp:460,tier:3,type:'overlord'}]},
+grandmaster:{name:"GRANDMASTER'S DOMAIN",sub:'Realm of Strategy',subject:'CHESS',bg1:'#1a1a1a',ground:'#1e1e1e',path:'#333333',unlocked:false,music:'grandmaster',
+buildings:[{x:-340,y:-220,w:220,h:180,c:'#4a4a4a',label:'♚ CHESS CATHEDRAL'},{x:340,y:-220,w:200,h:160,c:'#5a5a5a',label:'♞ TACTIC HALL'}],
+npcs:['grandmaster_rai'],enemies:[{id:'black_knight',name:'Black Knight',x:0,y:-380,hp:160,color:'#333333',subject:'chess',xp:180,tier:2,type:'knight',wander:true},{id:'queen_shadow',name:'Queen Shadow',x:200,y:-520,hp:350,color:'#555555',subject:'chess',xp:480,tier:3,type:'knight'}]}
+};
+
+var NPC_DATA={
+archivist:{name:'Archivist Lira',color:'#4caf50',x:-260,y:-120},
+arith:{name:'Professor Arith',color:'#6a4cff',x:260,y:-120},
+codian:{name:'Master Codian',color:'#ffb347',x:-260,y:180},
+vex:{name:'Strategist Vex',color:'#d43f3f',x:260,y:180},
+numerian_sage:{name:'Numerian Sage',color:'#8866ff',x:0,y:-120},
+librarian_ess:{name:'Librarian Ess',color:'#ff88cc',x:0,y:-120},
+chronicler_roy:{name:'Chronicler Roy',color:'#ffcc66',x:0,y:-120},
+ranger_kess:{name:'Ranger Kess',color:'#66aa88',x:0,y:-120},
+scientist_nyx:{name:'Scientist Nyx',color:'#44ffaa',x:0,y:-120},
+programmer_axi:{name:'Programmer Axi',color:'#66ccff',x:0,y:-120},
+grandmaster_rai:{name:'Grandmaster Rai',color:'#cccccc',x:0,y:-120}
+};
+
+var ACHIEVEMENTS=[
+{id:'first_steps',icon:'👣',name:'First Steps',desc:'Enter the Academy Capital'},
+{id:'talk_archivist',icon:'📚',name:'Student of Lore',desc:'Speak with Archivist Lira'},
+{id:'first_puzzle',icon:'🧩',name:'Puzzle Solver',desc:'Solve your first puzzle'},
+{id:'numeria_hero',icon:'🔢',name:'Numeria Hero',desc:'Unlock the Kingdom of Numeria'},
+{id:'all_regions',icon:'🌍',name:'World Traveler',desc:'Unlock all 8 regions'},
+{id:'first_blood',icon:'⚔️',name:'First Blood',desc:'Win your first battle'},
+{id:'boss_slayer',icon:'🐉',name:'Boss Slayer',desc:'Defeat a tier-3 boss'},
+{id:'boss_phase',icon:'💥',name:'Overwhelming',desc:'Push a boss to its second phase'},
+{id:'combo_5',icon:'🔥',name:'On a Roll',desc:'Chain 5 correct answers'},
+{id:'companion',icon:'🐾',name:'New Friend',desc:'Unlock your companion'},
+{id:'chest_5',icon:'🎁',name:'Treasure Seeker',desc:'Open 5 chests'},
+{id:'bounty_all',icon:'📋',name:'Bounty Hunter',desc:'Complete all 3 daily bounties'},
+{id:'level_5',icon:'⭐',name:'Rising Scholar',desc:'Reach level 5'},
+{id:'level_10',icon:'🌟',name:'Accomplished',desc:'Reach level 10'},
+{id:'level_20',icon:'✨',name:'Master Scholar',desc:'Reach level 20'},
+{id:'skill_invested',icon:'🌳',name:'Invested',desc:'Unlock your first skill'},
+{id:'rich',icon:'💰',name:'Wealthy',desc:'Accumulate 1000 Knowledge Shards'},
+{id:'polyglot',icon:'🧠',name:'Polyglot',desc:'Solve puzzles in 3+ subjects'},
+{id:'coin_10',icon:'🪙',name:'Coin Collector',desc:'Collect 10 coins'},
+{id:'coin_50',icon:'💎',name:'Treasure Hunter',desc:'Collect 50 coins'},
+{id:'rain_walker',icon:'🌧️',name:'Rain Walker',desc:'Experience the rain'},
+{id:'all_tier3',icon:'👑',name:'Legend Slayer',desc:'Defeat all tier-3 bosses'}
+];
+
+var SKILLS={
+mathematics:[{id:'math_1',name:'Quick Thinker',desc:'+10% XP math'},{id:'math_2',name:'Pattern Seer',desc:'Hints sooner'},{id:'math_3',name:'Master Arcanist',desc:'Free first hint'}],
+english:[{id:'eng_1',name:'Word Weave',desc:'+10% XP English'},{id:'eng_2',name:'Silver Tongue',desc:'Better dialogue rewards'},{id:'eng_3',name:'Lorekeeper',desc:'Extra lore'}],
+science:[{id:'sci_1',name:'Hypothesis',desc:'+10% XP science'},{id:'sci_2',name:'Observation',desc:'Reveal collectibles'},{id:'sci_3',name:'Discovery',desc:'Bonus exploration'}],
+exploration:[{id:'exp_1',name:'Pathfinder',desc:'+15% movement speed'},{id:'exp_2',name:'Vitality',desc:'+30 max HP'},{id:'exp_3',name:'Survivor',desc:'Regen HP'}],
+combat:[{id:'com_1',name:'Sharp Blade',desc:'+3 damage'},{id:'com_2',name:'Iron Skin',desc:'-30% damage taken'},{id:'com_3',name:'Berserker',desc:'Combo +50% damage'}],
+general:[{id:'gen_1',name:'Student',desc:'+5% XP all'},{id:'gen_2',name:'Scholar',desc:'+10% XP all'},{id:'gen_3',name:'Legend',desc:'+20% XP all'}]
+};
+
+var SUBJECT_NAMES={mathematics:'Mathematics',english:'English',science:'Science',geography:'Geography',history:'History',coding:'Coding',chess:'Chess'};
+
+var MUSIC_SCALES={
+academy:[261.63,329.63,392.00,523.25],
+numeria:[220.00,261.63,329.63,440.00],
+eloquentia:[246.94,311.13,369.99,493.88],
+chronicle:[174.61,220.00,261.63,349.23],
+atlas:[293.66,369.99,440.00,587.33],
+quantum:[196.00,246.94,293.66,392.00],
+binary:[130.81,155.56,196.00,233.08],
+grandmaster:[146.83,185.00,220.00,293.66]
+};
+
+var BOUNTY_POOL=[
+{id:'solve_math',text:'Solve 3 math puzzles',type:'solve',subject:'mathematics',count:3,reward:80},
+{id:'solve_eng',text:'Solve 3 English puzzles',type:'solve',subject:'english',count:3,reward:80},
+{id:'solve_sci',text:'Solve 2 science puzzles',type:'solve',subject:'science',count:2,reward:90},
+{id:'solve_hist',text:'Solve 2 history puzzles',type:'solve',subject:'history',count:2,reward:90},
+{id:'solve_geo',text:'Solve 2 geography puzzles',type:'solve',subject:'geography',count:2,reward:90},
+{id:'win_battles',text:'Win 2 battles',type:'battle',count:2,reward:100},
+{id:'win_boss',text:'Defeat a tier-2+ enemy',type:'boss',count:1,reward:150},
+{id:'collect_coins',text:'Collect 5 coins',type:'coin',count:5,reward:60},
+{id:'open_chest',text:'Open 1 chest',type:'chest',count:1,reward:120},
+{id:'talk_npc',text:'Talk to 3 NPCs',type:'npc',count:3,reward:50},
+{id:'level_up',text:'Gain 300 XP',type:'xp',count:300,reward:100}
+];
+
+var DEFAULT_STATE={
+player:{name:'',class:'Arcanist',skin:0xf0c8a0,hair:0x2a1810,outfit:0x6a4cff,level:1,xp:0,shards:0,skillPoints:0,hp:100,maxHp:100,region:'academy',x:0,y:120,facing:'down'},
+quests:{},mastery:{},unlockedRegions:['academy'],skills:[],achievements:[],inventory:{},
+seenNPCs:[],enemiesDefeated:{},coins:{},chests:{},hasCompanion:false,companionName:'',
+companionPersonality:'curious',
+settings:{sound:true,music:true,minimap:true},
+playtime:0,comboBest:0,hasSeenRain:false,hasSeenIntro:false,
+bounties:{date:'',list:[],progress:{},completed:false}
+};
+var state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));}catch(e){}}
+function loadSave(){
+try{var s=localStorage.getItem(SAVE_KEY);
+if(s){state=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),JSON.parse(s));
+state.player=Object.assign({},DEFAULT_STATE.player,state.player);
+state.settings=Object.assign({},DEFAULT_STATE.settings,state.settings);
+state.coins=state.coins||{};state.chests=state.chests||{};
+state.bounties=state.bounties||{date:'',list:[],progress:{},completed:false};
+return true;}
+}catch(e){}
+return false;
+}
+
+// ===== AUDIO =====
+var audioCtx=null;
+function ensureAudio(){try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+function playTone(freq,dur,type,vol){
+if(!state.settings.sound)return;
+ensureAudio();if(!audioCtx)return;
+try{var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type||'sine';o.frequency.value=freq;
+g.gain.setValueAtTime(vol||0.1,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+o.connect(g);g.connect(audioCtx.destination);
+o.start();o.stop(audioCtx.currentTime+dur);}catch(e){}
+}
+function sfxCoin(){playTone(880,0.08,'sine',0.08);setTimeout(function(){playTone(1320,0.12,'sine',0.08);},60);}
+function sfxLevel(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){playTone(f,0.15,'triangle',0.1);},i*90);});}
+function sfxChest(){[660,880,1100,1320].forEach(function(f,i){setTimeout(function(){playTone(f,0.12,'triangle',0.09);},i*70);});}
+function sfxHit(){playTone(220,0.1,'sawtooth',0.12);}
+function sfxCrit(){playTone(330,0.08,'sawtooth',0.14);setTimeout(function(){playTone(440,0.1,'square',0.1);},50);}
+function sfxMiss(){playTone(150,0.15,'square',0.08);}
+function sfxQuest(){[659,784,988].forEach(function(f,i){setTimeout(function(){playTone(f,0.2,'sine',0.1);},i*100);});}
+function sfxDialogue(){playTone(660,0.05,'sine',0.04);}
+function sfxInteract(){playTone(440,0.06,'triangle',0.06);}
+function sfxBoss(){[130,98,82,65].forEach(function(f,i){setTimeout(function(){playTone(f,0.35,'sawtooth',0.15);},i*120);});}
+
+// ===== AMBIENT MUSIC =====
+var musicTimer=null,musicIdx=0,musicRegion=null,musicNotes=[];
+function startMusic(region){
+if(!state.settings.music){stopMusic();return;}
+if(musicRegion===region&&musicTimer)return;
+stopMusic();
+musicRegion=region;
+musicNotes=MUSIC_SCALES[region]||MUSIC_SCALES.academy;
+musicIdx=0;
+musicTimer=setInterval(function(){
+if(!state.settings.music||!audioCtx)return;
+var scale=musicNotes;
+var note=scale[Math.floor(Math.random()*scale.length)];
+playTone(note,1.8,'sine',0.035);
+if(Math.random()<0.3){
+setTimeout(function(){
+var n2=scale[Math.floor(Math.random()*scale.length)]/2;
+playTone(n2,2.4,'triangle',0.025);
+},400);
+}
+},2400);
+}
+function stopMusic(){
+if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+musicRegion=null;
+}
+
+var shake=0;
+function addShake(amt){shake=Math.max(shake,amt);}
+function flashScreen(){var f=document.getElementById('flash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},200);}
+
+// ===== XP =====
+function xpForLevel(l){return l<=1?0:Math.round(100*Math.pow(l-1,1.6));}
+function xpMult(){var m=1;
+if(state.skills.indexOf('gen_1')>=0)m+=.05;
+if(state.skills.indexOf('gen_2')>=0)m+=.10;
+if(state.skills.indexOf('gen_3')>=0)m+=.20;
+return m;}
+function addXp(n){
+var gained=Math.round(n*xpMult());
+state.player.xp+=gained;
+checkBountyProgress('xp',gained);
+var nl=1;while(state.player.xp>=xpForLevel(nl+1))nl++;
+if(nl>state.player.level){
+var d=nl-state.player.level;
+state.player.level=nl;state.player.skillPoints+=d;
+state.player.shards+=d*50;state.player.maxHp+=d*10;state.player.hp=state.player.maxHp;
+toast('✦ Level '+nl+'! +'+d+' skill point'+(d>1?'s':'')+', +'+(d*50)+' shards');
+sfxLevel();addShake(8);flashScreen();
+burstParticles(state.player.x,state.player.y,25,'#EF5C11');
+burstParticles(state.player.x,state.player.y,18,'#FFD700');
+if(nl>=5)unlockAchievement('level_5');
+if(nl>=10)unlockAchievement('level_10');
+if(nl>=20)unlockAchievement('level_20');
+if(nl>=3&&!state.hasCompanion){state.hasCompanion=true;unlockAchievement('companion');promptCompanionName();}
+}
+updateHud();save();
+}
+function addShards(n){state.player.shards+=n;if(state.player.shards>=1000)unlockAchievement('rich');updateHud();save();}
+function unlockAchievement(id){
+if(state.achievements.indexOf(id)>=0)return;
+var a=null;for(var i=0;i<ACHIEVEMENTS.length;i++)if(ACHIEVEMENTS[i].id===id)a=ACHIEVEMENTS[i];
+if(!a)return;
+state.achievements.push(id);
+toast('🏆 '+a.name,true);
+playTone(880,0.12,'sine',0.1);setTimeout(function(){playTone(1175,0.18,'sine',0.1);},120);
+companionSay([ 'Impressive!', 'Well done!', 'A new badge!' ]);
+save();
+}
+
+// ===== HUD =====
+function updateHud(){
+var p=state.player;
+document.getElementById('hud-name').textContent=p.name||'Scholar';
+document.getElementById('hud-level').textContent=p.level;
+document.getElementById('hud-class').textContent=p.class;
+document.getElementById('hud-shards').textContent=p.shards;
+document.getElementById('hud-sp').textContent=p.skillPoints;
+var cur=p.xp-xpForLevel(p.level);
+var need=xpForLevel(p.level+1)-xpForLevel(p.level);
+document.getElementById('hud-xp').style.width=Math.max(0,Math.min(100,(cur/need)*100))+'%';
+document.getElementById('hud-hp').style.width=(p.hp/p.maxHp*100)+'%';
+updateQuestTracker();
+}
+function toast(msg,ach){
+var el=document.createElement('div');
+el.className='toast'+(ach?' achievement':'');
+el.textContent=msg;
+document.getElementById('toast-container').appendChild(el);
+setTimeout(function(){el.remove();},3200);
+}
+function showScreen(id){
+['screen-title','screen-creation'].forEach(function(s){
+document.getElementById(s).classList.toggle('hidden',s!==id);
+});
+document.getElementById('hud').classList.toggle('hidden',id!==null);
+document.getElementById('quest-tracker').classList.toggle('show',id===null);
+document.getElementById('minimap').classList.toggle('show',id===null&&state.settings.minimap);
+if(id!==null)closeAllPanels();
+setTimeout(blurAll,0);
+}
+function blurAll(){try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();}catch(e){}}
+function closeAllPanels(){
+['puzzle','combat','portals','skilltree','achievements','settings','bounties','companion-name','intro'].forEach(closePanel);
+document.getElementById('dialogue').classList.add('hidden');
+document.getElementById('journal').classList.remove('open');
+blurAll();
+}
+function togglePanel(id){
+var el=document.getElementById(id);
+var isOpen=!el.classList.contains('hidden');
+closeAllPanels();
+if(!isOpen){
+el.classList.remove('hidden');
+if(id==='skilltree'){renderSkillTree();renderMastery();}
+if(id==='achievements')renderAchievements();
+if(id==='portals')renderPortals();
+if(id==='settings')renderSettings();
+if(id==='bounties')renderBounties();
+blurAll();
+}
+}
+function closePanel(id){var el=document.getElementById(id);if(el)el.classList.add('hidden');}
+
+function updateQuestTracker(){
+var el=document.getElementById('qt-content');
+var tracker=document.getElementById('quest-tracker');
+var active=null;
+var order=['welcome','numeria','numeria_master','english_master','history_master','geo_master','sci_master','code_master','chess_master'];
+for(var i=0;i<order.length;i++){
+var q=state.quests[order[i]];
+if(q&&q.status!=='completed'){active={id:order[i],q:q};break;}
+}
+if(!active){el.innerHTML='<div style="opacity:.6">Explore and talk to NPCs to find quests.</div>';tracker.classList.add('show');return;}
+var meta=QUEST_META[active.id];
+if(!meta){el.innerHTML='<div style="opacity:.6">Explore.</div>';tracker.classList.add('show');return;}
+var html='<div class="qname">'+meta.name+'</div>';
+meta.objectives.forEach(function(o){
+var done=active.q.objectives&&active.q.objectives[o.key];
+html+='<div class="obj '+(done?'done':'')+'">'+o.label+'</div>';
+});
+el.innerHTML=html;tracker.classList.add('show');
+}
+
+// ===== BOUNTIES =====
+function todayStr(){
+var d=new Date();
+return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+function seedRandom(seed){
+var x=Math.sin(seed)*10000;
+return x-Math.floor(x);
+}
+function ensureBounties(){
+var today=todayStr();
+if(state.bounties.date===today&&state.bounties.list.length>0)return;
+var daySeed=0;for(var i=0;i<today.length;i++)daySeed+=today.charCodeAt(i)*(i+1);
+var pool=BOUNTY_POOL.slice();
+var chosen=[];
+for(var i=0;i<3&&pool.length>0;i++){
+var idx=Math.floor(seedRandom(daySeed+i*7)*pool.length);
+chosen.push(pool.splice(idx,1)[0]);
+}
+state.bounties={date:today,list:chosen,progress:{},completed:false};
+save();
+toast('📋 New daily bounties available!');
+}
+function checkBountyProgress(type,amount,subject){
+if(!state.bounties||!state.bounties.list)return;
+var changed=false;
+state.bounties.list.forEach(function(b){
+if(state.bounties.progress[b.id]>=b.count)return;
+if(state.bounties.completed)return;
+var matches=false;
+if(b.type===type){
+if(b.type==='solve'&&subject&&b.subject===subject)matches=true;
+else if(b.type!==solve_check(b.type))matches=true;
+}
+if(b.type==='boss'&&type==='battle'&&subject==='boss')matches=true;
+if(matches){
+state.bounties.progress[b.id]=(state.bounties.progress[b.id]||0)+amount;
+if(state.bounties.progress[b.id]>=b.count){
+addShards(b.reward);
+toast('📋 Bounty complete: '+b.text+' (+'+b.reward+'💎)');
+}
+changed=true;
+}
+});
+if(!state.bounties.completed&&state.bounties.list.every(function(b){return (state.bounties.progress[b.id]||0)>=b.count;})){
+state.bounties.completed=true;
+addShards(200);
+toast('📋 ALL bounties complete! +200 bonus shards');
+unlockAchievement('bounty_all');
+}
+if(changed)save();
+}
+function solve_check(t){return t;}
+function renderBounties(){
+var el=document.getElementById('bounty-list');
+var html='';
+state.bounties.list.forEach(function(b){
+var prog=state.bounties.progress[b.id]||0;
+var done=prog>=b.count;
+html+='<div class="bounty-card '+(done?'bounty-done':'')+'">';
+html+='<div class="bounty-title">'+(done?'✓ ':'')+b.text+'</div>';
+html+='<div class="bounty-prog">Progress: '+Math.min(prog,b.count)+' / '+b.count+' · Reward: '+b.reward+'💎</div>';
+html+='</div>';
+});
+if(state.bounties.completed)html+='<div style="text-align:center;margin-top:16px;color:#FFD700;font-weight:700">ALL BOUNTIES COMPLETE — Come back tomorrow!</div>';
+el.innerHTML=html;
+}
+
+// ===== CHARACTER =====
+var newChar={skin:0xf0c8a0,hair:0x2a1810,outfit:0x6a4cff,class:'Arcanist'};
+function renderClassGrid(){
+var g=document.getElementById('class-grid');g.innerHTML='';
+CLASSES.forEach(function(c){
+var card=document.createElement('div');
+card.className='class-card'+(c.id===newChar.class?' selected':'');
+card.innerHTML='<div class="class-icon">'+c.icon+'</div><div class="class-name">'+c.id+'</div><div class="class-desc">'+c.desc+'</div>';
+card.onclick=function(){newChar.class=c.id;newChar.outfit=c.color;renderClassGrid();renderColorPickers();};
+g.appendChild(card);
+});
+}
+function renderColorPickers(){
+function mk(el,colors,key,cur){
+el.innerHTML='';
+colors.forEach(function(c){
+var d=document.createElement('div');
+d.className='color-swatch'+(c===cur?' selected':'');
+d.style.background='#'+c.toString(16).padStart(6,'0');
+d.onclick=function(){newChar[key]=c;renderColorPickers();};
+el.appendChild(d);
+});
+}
+mk(document.getElementById('skin-picker'),SKIN_TONES,'skin',newChar.skin);
+mk(document.getElementById('hair-picker'),HAIR_COLORS,'hair',newChar.hair);
+mk(document.getElementById('outfit-picker'),OUTFIT_COLORS,'outfit',newChar.outfit);
+}
+
+// ===== CANVAS =====
+var canvas,ctx,pcanvas,pctx,W,H;
+var keys={},moveVec={x:0,y:0},cam={x:0,y:0},walkPhase=0,facing='down';
+var interactables=[],currentInteractable=null,enemies=[],npcs=[],buildings=[],decor=[],coins=[],chests=[];
+var particles=[],floatingTexts=[];
+var lastTime=0,playtimeAccum=0;
+var companion={x:0,y:0,phase:0};
+var dayCycle=0;
+var weather={type:'clear',timer:20,drops:[]};
+var companionBubble={text:'',life:0};
+
+function initCanvas(){
+canvas=document.getElementById('game-canvas');ctx=canvas.getContext('2d');
+pcanvas=document.getElementById('particle-canvas');pctx=pcanvas.getContext('2d');
+resize();window.addEventListener('resize',resize);
+}
+function resize(){W=canvas.width=pcanvas.width=window.innerWidth;H=canvas.height=pcanvas.height=window.innerHeight;}
+function hex(n){return '#'+n.toString(16).padStart(6,'0');}
+function worldToScreen(x,y){
+var sx=shake>0?(Math.random()-0.5)*shake:0;
+var sy=shake>0?(Math.random()-0.5)*shake:0;
+return {x:x-cam.x+W/2+sx,y:y-cam.y+H/2+sy};
+}
+function companionSay(lines){
+if(!state.hasCompanion)return;
+var line=lines[Math.floor(Math.random()*lines.length)];
+companionBubble={text:line,life:3};
+}
+
+function drawSprite(x,y,char,fc,wp,name){
+var p=worldToScreen(x,y);
+var skin=hex(char.skin),hair=hex(char.hair),outfit=hex(char.outfit);
+var swing=Math.sin(wp)*6;
+ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+24,20,7,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#3a2510';
+ctx.beginPath();ctx.ellipse(p.x-8,p.y+20+swing,6,5,0,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.ellipse(p.x+8,p.y+20-swing,6,5,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#1e2a4a';ctx.fillRect(p.x-11,p.y+4,8,18);ctx.fillRect(p.x+3,p.y+4,8,18);
+ctx.fillStyle=outfit;
+ctx.beginPath();ctx.moveTo(p.x-14,p.y-10);ctx.lineTo(p.x+14,p.y-10);ctx.lineTo(p.x+12,p.y+8);ctx.lineTo(p.x-12,p.y+8);ctx.closePath();ctx.fill();
+ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fillRect(p.x-12,p.y-8,24,3);
+ctx.fillStyle='#8a5a20';ctx.fillRect(p.x-12,p.y+4,24,4);
+ctx.fillStyle='#FFD700';ctx.fillRect(p.x-3,p.y+4,6,4);
+var armSwing=Math.sin(wp+Math.PI)*5;
+ctx.fillStyle=skin;
+ctx.beginPath();ctx.ellipse(p.x-17,p.y-2+armSwing,5,11,0,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.ellipse(p.x+17,p.y-2-armSwing,5,11,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle=outfit;ctx.fillRect(p.x-20,p.y-8,8,10);ctx.fillRect(p.x+12,p.y-8,8,10);
+ctx.fillStyle=skin;ctx.fillRect(p.x-4,p.y-16,8,8);
+ctx.fillStyle=skin;ctx.beginPath();ctx.arc(p.x,p.y-22,12,0,Math.PI*2);ctx.fill();
+ctx.fillStyle=hair;ctx.beginPath();ctx.arc(p.x,p.y-24,12,Math.PI,Math.PI*2);ctx.fill();
+ctx.fillRect(p.x-12,p.y-24,3,8);ctx.fillRect(p.x+9,p.y-24,3,8);
+ctx.fillStyle='#111';
+if(fc==='down'){ctx.fillRect(p.x-5,p.y-23,3,4);ctx.fillRect(p.x+2,p.y-23,3,4);ctx.fillStyle='#8a4a3a';ctx.fillRect(p.x-3,p.y-15,6,1);}
+else if(fc==='left'){ctx.fillRect(p.x-8,p.y-23,3,4);ctx.fillRect(p.x-2,p.y-23,3,4);}
+else if(fc==='right'){ctx.fillRect(p.x+2,p.y-23,3,4);ctx.fillRect(p.x+8,p.y-23,3,4);}
+if(name){
+ctx.font='bold 12px system-ui,sans-serif';ctx.textAlign='center';
+ctx.lineWidth=4;ctx.strokeStyle='#031E3D';ctx.strokeText(name,p.x,p.y-46);
+ctx.fillStyle='#fff';ctx.fillText(name,p.x,p.y-46);
+}
+}
+
+function drawEnemySprite(cxt,px,py,e,scale,hpPct){
+var bob=Math.sin(Date.now()/300+e.x)*4;
+var t=e.type||'sprite';
+if(t==='sprite'){
+cxt.fillStyle=e.color;cxt.beginPath();
+cxt.moveTo(px,py-28+bob);cxt.lineTo(px+20,py-6+bob);cxt.lineTo(px,py+16+bob);cxt.lineTo(px-20,py-6+bob);cxt.closePath();cxt.fill();
+cxt.strokeStyle='rgba(0,0,0,0.5)';cxt.lineWidth=2;cxt.stroke();
+cxt.font='bold 22px system-ui';cxt.textAlign='center';cxt.fillStyle='#fff';cxt.fillText('7',px,py+bob);
+} else if(t==='golem'){
+cxt.fillStyle=e.color;cxt.fillRect(px-24,py-32+bob,48,44);
+cxt.strokeStyle='#fff';cxt.lineWidth=2;cxt.strokeRect(px-24,py-32+bob,48,44);
+cxt.fillStyle='#111';cxt.fillRect(px-14,py-22+bob,8,8);cxt.fillRect(px+6,py-22+bob,8,8);
+cxt.fillStyle='#FFD700';cxt.fillRect(px-6,py-2+bob,12,4);
+cxt.font='bold 14px system-ui';cxt.textAlign='center';cxt.fillStyle='#fff';cxt.fillText('∑',px,py-44+bob);
+} else if(t==='phantom'){
+cxt.fillStyle=e.color;cxt.beginPath();cxt.arc(px,py-8+bob,20,Math.PI,Math.PI*2);
+for(var i=0;i<4;i++){var wx=px-20+i*10;cxt.lineTo(wx+5,py+16+bob);cxt.lineTo(wx+10,py+8+bob);}
+cxt.closePath();cxt.fill();
+cxt.fillStyle='#111';cxt.beginPath();cxt.arc(px-7,py-10+bob,3,0,Math.PI*2);cxt.arc(px+7,py-10+bob,3,0,Math.PI*2);cxt.fill();
+cxt.beginPath();cxt.arc(px,py+2+bob,5,0,Math.PI);cxt.fill();
+} else if(t==='wraith'){
+cxt.fillStyle=e.color;cxt.beginPath();cxt.arc(px,py-6+bob,22,Math.PI,Math.PI*2);cxt.fill();
+cxt.fillStyle='rgba(0,0,0,0.4)';cxt.fillRect(px-22,py-6+bob,44,4);
+cxt.fillStyle='#fff';cxt.beginPath();cxt.arc(px-8,py-10+bob,4,0,Math.PI*2);cxt.arc(px+8,py-10+bob,4,0,Math.PI*2);cxt.fill();
+cxt.fillStyle='#111';cxt.beginPath();cxt.arc(px-8,py-10+bob,2,0,Math.PI*2);cxt.arc(px+8,py-10+bob,2,0,Math.PI*2);cxt.fill();
+} else if(t==='warden'){
+cxt.fillStyle=e.color;cxt.beginPath();cxt.arc(px,py-8+bob,22,0,Math.PI*2);cxt.fill();
+cxt.strokeStyle='#664422';cxt.lineWidth=3;cxt.stroke();
+cxt.strokeStyle='#111';cxt.lineWidth=2;
+cxt.beginPath();cxt.moveTo(px,py-8+bob);cxt.lineTo(px,py-22+bob);cxt.stroke();
+cxt.beginPath();cxt.moveTo(px,py-8+bob);cxt.lineTo(px+12,py-8+bob);cxt.stroke();
+} else if(t==='mimic'){
+cxt.fillStyle=e.color;cxt.beginPath();cxt.arc(px,py-4+bob,24,0,Math.PI*2);cxt.fill();
+cxt.fillStyle='#fff';cxt.beginPath();cxt.arc(px-9,py-8+bob,5,0,Math.PI*2);cxt.arc(px+9,py-8+bob,5,0,Math.PI*2);cxt.fill();
+cxt.fillStyle='#111';cxt.beginPath();cxt.arc(px-9,py-8+bob,2.5,0,Math.PI*2);cxt.arc(px+9,py-8+bob,2.5,0,Math.PI*2);cxt.fill();
+cxt.beginPath();cxt.arc(px,py+2+bob,8,0,Math.PI);cxt.fill();
+cxt.fillStyle='#fff';for(var i=0;i<4;i++){cxt.fillRect(px-6+i*4,py-3+bob,2,4);}
+} else if(t==='serpent'){
+cxt.fillStyle=e.color;var segs=6;
+for(var i=0;i<segs;i++){
+var sx=px+Math.sin(Date.now()/250+i*0.7)*12;
+var sy=py-24+bob+i*6;
+cxt.beginPath();cxt.arc(sx,sy,10-i*0.8,0,Math.PI*2);cxt.fill();
+}
+cxt.fillStyle='#111';cxt.beginPath();cxt.arc(px-4,py-26+bob,2,0,Math.PI*2);cxt.arc(px+4,py-26+bob,2,0,Math.PI*2);cxt.fill();
+cxt.fillStyle='#ff0000';cxt.beginPath();cxt.moveTo(px,py-18+bob);cxt.lineTo(px-3,py-14+bob);cxt.lineTo(px+3,py-14+bob);cxt.closePath();cxt.fill();
+} else if(t==='overlord'){
+cxt.fillStyle='#000';cxt.fillRect(px-26,py-34+bob,52,52);
+cxt.fillStyle=e.color;cxt.font='bold 10px monospace';cxt.textAlign='left';
+var chars='01';
+for(var i=0;i<4;i++)for(var j=0;j<4;j++){cxt.fillText(chars[Math.floor(Math.random()*2)],px-22+i*14,py-24+bob+j*14);}
+cxt.strokeStyle=e.color;cxt.lineWidth=2;cxt.strokeRect(px-26,py-34+bob,52,52);
+} else if(t==='knight'){
+cxt.fillStyle=e.color;cxt.beginPath();
+cxt.moveTo(px-10,py-4+bob);cxt.lineTo(px-10,py-24+bob);cxt.lineTo(px+2,py-32+bob);
+cxt.lineTo(px+10,py-24+bob);cxt.lineTo(px+10,py-4+bob);cxt.closePath();cxt.fill();
+cxt.fillStyle='#000';cxt.beginPath();cxt.moveTo(px-10,py-24+bob);cxt.lineTo(px-4,py-32+bob);cxt.lineTo(px-6,py-20+bob);cxt.closePath();cxt.fill();
+cxt.fillStyle='#ff0000';cxt.beginPath();cxt.arc(px+2,py-24+bob,2,0,Math.PI*2);cxt.fill();
+}
+}
+
+function drawEnemy(e){
+var p=worldToScreen(e.x,e.y);
+var hpPct=e.hp/e.maxHp;
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(p.x,p.y+24,22,8,0,0,Math.PI*2);ctx.fill();
+if(e.phase===2){ctx.fillStyle='rgba(255,0,0,0.15)';ctx.beginPath();ctx.arc(p.x,p.y-10,40,0,Math.PI*2);ctx.fill();}
+drawEnemySprite(ctx,p.x,p.y,e,1,hpPct);
+ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-26,p.y-52,52,7);
+ctx.fillStyle=hpPct>0.5?'#4CAF50':hpPct>0.25?'#FFC107':'#F44336';
+ctx.fillRect(p.x-26,p.y-52,52*hpPct,7);
+ctx.strokeStyle='rgba(0,0,0,.9)';ctx.lineWidth=1;ctx.strokeRect(p.x-26,p.y-52,52,7);
+if(e.tier>=2){
+ctx.fillStyle='#FFD700';ctx.font='bold 10px system-ui';ctx.textAlign='center';
+for(var i=0;i<e.tier;i++)ctx.fillText('★',p.x-10+i*10,p.y-58);
+}
+ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';
+ctx.lineWidth=4;ctx.strokeStyle='#031E3D';
+var label=(e.phase===2?'👑 ':'')+e.name;
+ctx.strokeText(label,p.x,p.y-66);
+ctx.fillStyle='#fff';ctx.fillText(label,p.x,p.y-66);
+}
+
+function drawGround(r){
+ctx.fillStyle=r.bg1;ctx.fillRect(0,0,W,H);
+var gs=worldToScreen(0,0);
+ctx.fillStyle=r.ground;ctx.beginPath();ctx.arc(gs.x,gs.y,1400,0,Math.PI*2);ctx.fill();
+ctx.fillStyle=r.path;ctx.fillRect(gs.x-40,gs.y-1400,80,2800);ctx.fillRect(gs.x-1400,gs.y-40,2800,80);
+ctx.fillStyle='rgba(239,92,17,0.08)';
+for(var gx=-1000;gx<=1000;gx+=80)for(var gy=-1000;gy<=1000;gy+=80){
+var p=worldToScreen(gx,gy);if(p.x<-20||p.x>W+20||p.y<-20||p.y>H+20)continue;
+ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,Math.PI*2);ctx.fill();
+}
+}
+function drawTree(x,y){
+var p=worldToScreen(x,y);if(p.x<-80||p.x>W+80||p.y<-100||p.y>H+100)return;
+ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(p.x,p.y+22,22,8,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#4a3020';ctx.fillRect(p.x-5,p.y-8,10,32);
+ctx.fillStyle='#2d5a3d';ctx.beginPath();ctx.arc(p.x,p.y-30,26,0,Math.PI*2);ctx.arc(p.x-14,p.y-18,20,0,Math.PI*2);ctx.arc(p.x+14,p.y-18,20,0,Math.PI*2);ctx.fill();
+}
+function drawBuilding(b){
+var p=worldToScreen(b.x,b.y),w=b.w,h=b.h;
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(p.x-w/2+8,p.y-h/2+8,w,h);
+ctx.fillStyle=b.c;ctx.fillRect(p.x-w/2,p.y-h/2,w,h);
+ctx.fillStyle='#EF5C11';ctx.fillRect(p.x-w/2,p.y-h/2,w,18);
+ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=2;ctx.strokeRect(p.x-w/2,p.y-h/2,w,h);
+ctx.fillStyle='#111122';ctx.fillRect(p.x-12,p.y+h/2-22,24,22);
+ctx.fillStyle='rgba(255,224,160,0.9)';ctx.fillRect(p.x-w/2+18,p.y-h/2+40,20,20);ctx.fillRect(p.x+w/2-38,p.y-h/2+40,20,20);
+ctx.font='bold 12px system-ui,sans-serif';ctx.textAlign='center';
+ctx.lineWidth=4;ctx.strokeStyle='#031E3D';ctx.strokeText(b.label,p.x,p.y-h/2-10);
+ctx.fillStyle='#fff';ctx.fillText(b.label,p.x,p.y-h/2-10);
+}
+function drawNPC(npc){
+var p=worldToScreen(npc.x,npc.y);
+var bob=Math.sin(Date.now()/600+npc.x)*1.5;
+ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+24,18,7,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#3a2510';ctx.beginPath();ctx.ellipse(p.x-7,p.y+20,5,4,0,0,Math.PI*2);ctx.ellipse(p.x+7,p.y+20,5,4,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle=npc.color;ctx.fillRect(p.x-12,p.y-8+bob,24,26);
+ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(p.x-12,p.y+9+bob,24,3);
+ctx.fillStyle='#e0b088';ctx.fillRect(p.x-16,p.y-4+bob,5,14);ctx.fillRect(p.x+11,p.y-4+bob,5,14);
+ctx.fillRect(p.x-4,p.y-16+bob,8,8);
+ctx.fillStyle='#e0b088';ctx.beginPath();ctx.arc(p.x,p.y-22+bob,12,0,Math.PI*2);ctx.fill();
+ctx.fillStyle=npc.color;ctx.beginPath();ctx.moveTo(p.x,p.y-46+bob);ctx.lineTo(p.x-14,p.y-22+bob);ctx.lineTo(p.x+14,p.y-22+bob);ctx.closePath();ctx.fill();
+ctx.fillStyle='#111';ctx.fillRect(p.x-5,p.y-23+bob,3,3);ctx.fillRect(p.x+2,p.y-23+bob,3,3);
+ctx.font='bold 12px system-ui,sans-serif';ctx.textAlign='center';
+ctx.lineWidth=4;ctx.strokeStyle='#031E3D';ctx.strokeText(npc.name,p.x,p.y-54);
+ctx.fillStyle='#fff';ctx.fillText(npc.name,p.x,p.y-54);
+}
+function drawPortal(){
+var p=worldToScreen(0,-260);
+var r1=Date.now()/600;
+ctx.save();ctx.translate(p.x,p.y);ctx.rotate(r1);
+ctx.strokeStyle='#EF5C11';ctx.lineWidth=6;ctx.beginPath();ctx.arc(0,0,40,0,Math.PI*2);ctx.stroke();
+var grad=ctx.createRadialGradient(0,0,0,0,0,38);
+grad.addColorStop(0,'rgba(106,76,255,0.9)');grad.addColorStop(1,'rgba(106,76,255,0)');
+ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,0,38,0,Math.PI*2);ctx.fill();
+ctx.restore();
+ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';
+ctx.lineWidth=4;ctx.strokeStyle='#031E3D';ctx.strokeText('🌀 Portal',p.x,p.y-54);
+ctx.fillStyle='#fff';ctx.fillText('🌀 Portal',p.x,p.y-54);
+}
+function drawMonument(){
+var p=worldToScreen(0,0);
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(p.x,p.y+30,50,14,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#445566';ctx.beginPath();ctx.arc(p.x,p.y+20,45,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#556677';ctx.beginPath();ctx.arc(p.x,p.y+15,35,0,Math.PI*2);ctx.fill();
+var t=Date.now()/500;
+ctx.save();ctx.translate(p.x,p.y-15);ctx.rotate(t);ctx.fillStyle='#EF5C11';
+ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(15,0);ctx.lineTo(0,22);ctx.lineTo(-15,0);ctx.closePath();ctx.fill();ctx.restore();
+ctx.fillStyle='rgba(239,92,17,0.2)';ctx.beginPath();ctx.arc(p.x,p.y-15,40+Math.sin(t*2)*4,0,Math.PI*2);ctx.fill();
+}
+function drawCoin(c){
+var p=worldToScreen(c.x,c.y);
+if(p.x<-30||p.x>W+30||p.y<-30||p.y>H+30)return;
+var bob=Math.sin(Date.now()/400+c.x)*3;
+ctx.fillStyle='rgba(255,215,0,0.25)';ctx.beginPath();ctx.arc(p.x,p.y-8+bob,14,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(p.x,p.y-8+bob,9,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#B8860B';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText('★',p.x,p.y-5+bob);
+}
+function drawChest(ch){
+var p=worldToScreen(ch.x,ch.y);
+if(p.x<-40||p.x>W+40||p.y<-40||p.y>H+40)return;
+var bob=Math.sin(Date.now()/500+ch.x)*2;
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(p.x,p.y+14,20,6,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#8a5a20';ctx.fillRect(p.x-18,p.y-6+bob,36,22);
+ctx.fillStyle='#a06a2a';ctx.fillRect(p.x-18,p.y-16+bob,36,10);
+ctx.fillStyle='#FFD700';ctx.fillRect(p.x-4,p.y-8+bob,8,10);
+ctx.strokeStyle='#5a3a10';ctx.lineWidth=2;ctx.strokeRect(p.x-18,p.y-16+bob,36,32);
+ctx.fillStyle='#FFD700';ctx.font='bold 10px system-ui';ctx.textAlign='center';
+ctx.fillText('🎁 CHEST',p.x,p.y-24+bob);
+}
+function drawCompanion(){
+if(!state.hasCompanion)return;
+var p=worldToScreen(companion.x,companion.y);
+var bob=Math.sin(Date.now()/300)*2;
+ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(p.x,p.y+10,12,4,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#f0a020';ctx.beginPath();ctx.arc(p.x,p.y+bob,9,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.moveTo(p.x-9,p.y-6+bob);ctx.lineTo(p.x-5,p.y-12+bob);ctx.lineTo(p.x-2,p.y-6+bob);ctx.fill();
+ctx.beginPath();ctx.moveTo(p.x+9,p.y-6+bob);ctx.lineTo(p.x+5,p.y-12+bob);ctx.lineTo(p.x+2,p.y-6+bob);ctx.fill();
+ctx.fillStyle='#111';ctx.beginPath();ctx.arc(p.x-3,p.y-1+bob,1.5,0,Math.PI*2);ctx.arc(p.x+3,p.y-1+bob,1.5,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#f0a020';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(p.x+9,p.y+bob);ctx.quadraticCurveTo(p.x+18,p.y-4+bob+Math.sin(Date.now()/200)*3,p.x+14,p.y-12+bob);ctx.stroke();
+// name tag
+if(state.companionName){
+ctx.font='bold 10px system-ui';ctx.textAlign='center';
+ctx.lineWidth=3;ctx.strokeStyle='#031E3D';ctx.strokeText(state.companionName,p.x,p.y-20);
+ctx.fillStyle='#FFA366';ctx.fillText(state.companionName,p.x,p.y-20);
+}
+// speech bubble
+if(companionBubble.life>0&&companionBubble.text){
+var bx=p.x+20,by=p.y-30;
+ctx.fillStyle='rgba(3,30,61,.95)';
+ctx.strokeStyle='#EF5C11';ctx.lineWidth=2;
+ctx.beginPath();
+ctx.roundRect?ctx.roundRect(bx-4,by-14,ctx.measureText(companionBubble.text).width+40,20,4):ctx.rect(bx-4,by-14,120,20);
+ctx.fill();ctx.stroke();
+ctx.font='11px system-ui';ctx.textAlign='left';
+ctx.fillStyle='#fff';ctx.fillText(companionBubble.text,bx+4,by);
+}
+}
+
+function burstParticles(x,y,count,color){
+for(var i=0;i<count;i++){
+var a=Math.random()*Math.PI*2;
+var sp=1+Math.random()*3;
+particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,color:color,size:2+Math.random()*3});
+}
+}
+function addFloatText(x,y,text,color,size){
+floatingTexts.push({x:x,y:y,text:text,color:color,life:1,size:size||18});
+}
+function updateParticles(dt){
+for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.x+=p.vx*60*dt;p.y+=p.vy*60*dt;p.vy+=6*dt;p.life-=dt*1.2;if(p.life<=0)particles.splice(i,1);}
+for(var i=floatingTexts.length-1;i>=0;i--){var f=floatingTexts[i];f.y-=30*dt;f.life-=dt*0.8;if(f.life<=0)floatingTexts.splice(i,1);}
+if(companionBubble.life>0)companionBubble.life-=dt;
+}
+function updateWeather(dt){
+weather.timer-=dt;
+if(weather.timer<=0){
+if(weather.type==='clear'&&Math.random()<0.35){
+weather.type='rain';weather.timer=15+Math.random()*15;weather.drops=[];
+for(var i=0;i<80;i++)weather.drops.push({x:Math.random()*W,y:Math.random()*H,vy:400+Math.random()*200});
+if(!state.hasSeenRain){state.hasSeenRain=true;unlockAchievement('rain_walker');}
+} else {weather.type='clear';weather.timer=20+Math.random()*20;}
+}
+if(weather.type==='rain')for(var i=0;i<weather.drops.length;i++){
+var d=weather.drops[i];d.y+=d.vy*dt;d.x-=d.vy*0.15*dt;
+if(d.y>H){d.y=-10;d.x=Math.random()*W;}if(d.x<-10)d.x=W+10;
+}
+}
+function drawParticles(){
+pctx.clearRect(0,0,W,H);
+particles.forEach(function(p){var s=worldToScreen(p.x,p.y);pctx.globalAlpha=Math.max(0,p.life);pctx.fillStyle=p.color;pctx.beginPath();pctx.arc(s.x,s.y,p.size*p.life,0,Math.PI*2);pctx.fill();});
+floatingTexts.forEach(function(f){var s=worldToScreen(f.x,f.y);pctx.globalAlpha=Math.max(0,f.life);pctx.font='bold '+f.size+'px system-ui,sans-serif';pctx.textAlign='center';pctx.lineWidth=4;pctx.strokeStyle='#031E3D';pctx.strokeText(f.text,s.x,s.y);pctx.fillStyle=f.color;pctx.fillText(f.text,s.x,s.y);});
+if(weather.type==='rain'){pctx.globalAlpha=0.5;pctx.strokeStyle='#aaccee';pctx.lineWidth=1;for(var i=0;i<weather.drops.length;i++){var d=weather.drops[i];pctx.beginPath();pctx.moveTo(d.x,d.y);pctx.lineTo(d.x-3,d.y+14);pctx.stroke();}}
+pctx.globalAlpha=1;
+}
+
+// ===== WORLD =====
+function buildWorld(regionId){
+var r=REGIONS[regionId];if(!r)return;
+buildings=r.buildings.slice();npcs=[];enemies=[];interactables=[];decor=[];coins=[];chests=[];
+particles=[];floatingTexts=[];
+r.npcs.forEach(function(id){var d=NPC_DATA[id];if(d)npcs.push({id:id,name:d.name,color:d.color,x:d.x,y:d.y});});
+r.enemies.forEach(function(e){
+if(state.enemiesDefeated&&state.enemiesDefeated[e.id])return;
+enemies.push(Object.assign({},e,{maxHp:e.hp,origX:e.x,origY:e.y,phase:1}));
+});
+for(var i=0;i<30;i++){
+var angle=(i*137.5)*Math.PI/180,radius=480+((i*17)%120);
+var x=Math.cos(angle)*radius,y=Math.sin(angle)*radius;
+if(Math.abs(x)<300&&Math.abs(y)<300)continue;
+decor.push({type:'tree',x:x,y:y});
+}
+if(!state.coins)state.coins={};if(!state.chests)state.chests={};
+var regionCoins=state.coins[regionId]||[];
+for(var i=0;i<8;i++){
+var seed=(i+1)*regionId.length*137;var ang=(seed%360)*Math.PI/180;var rad=250+((seed*7)%200);
+if(regionCoins.indexOf(i)>=0)continue;
+coins.push({id:i,x:Math.cos(ang)*rad,y:Math.sin(ang)*rad});
+}
+var regionChests=state.chests[regionId]||[];
+for(var i=0;i<3;i++){
+if(regionChests.indexOf(i)>=0)continue;
+var seed=(i+10)*regionId.length*91;var ang=((seed*3)%360)*Math.PI/180;var rad=380+((seed*5)%150);
+chests.push({id:i,x:Math.cos(ang)*rad,y:Math.sin(ang)*rad});
+}
+companion.x=state.player.x-40;companion.y=state.player.y+40;
+}
+function enterRegion(regionId){
+var r=REGIONS[regionId];if(!r)return;
+state.player.region=regionId;state.player.x=0;state.player.y=120;
+cam.x=state.player.x;cam.y=state.player.y;
+buildWorld(regionId);updateHud();save();
+showRegionBanner(r.name,r.sub);
+if(state.settings.music)startMusic(regionId);
+var unlocked=Object.keys(REGIONS).filter(function(k){return REGIONS[k].unlocked||state.unlockedRegions.indexOf(k)>=0;});
+if(unlocked.length>=8)unlockAchievement('all_regions');
+}
+function showRegionBanner(name,sub){
+document.getElementById('region-name').textContent=name;
+document.getElementById('region-sub').textContent=sub;
+var b=document.getElementById('region-banner');b.classList.add('show');
+setTimeout(function(){b.classList.remove('show');},2400);
+}
+
+// ===== UPDATE =====
+function update(dt){
+dayCycle+=dt*0.02;
+shake=Math.max(0,shake-dt*40);
+updateWeather(dt);
+var uiBlocking=!document.getElementById('dialogue').classList.contains('hidden')||
+!document.getElementById('puzzle').classList.contains('hidden')||
+!document.getElementById('combat').classList.contains('hidden')||
+!document.getElementById('portals').classList.contains('hidden')||
+!document.getElementById('skilltree').classList.contains('hidden')||
+!document.getElementById('achievements').classList.contains('hidden')||
+!document.getElementById('settings').classList.contains('hidden')||
+!document.getElementById('bounties').classList.contains('hidden')||
+!document.getElementById('companion-name').classList.contains('hidden')||
+!document.getElementById('intro').classList.contains('hidden');
+if(uiBlocking){updateParticles(dt);drawCombatScene();return;}
+
+playtimeAccum+=dt;
+if(playtimeAccum>=10){playtimeAccum=0;state.playtime=(state.playtime||0)+10;save();}
+
+for(var i=0;i<enemies.length;i++){
+var e=enemies[i];
+if(e.wander){e.phase_t=(e.phase_t||0)+dt;e.x=e.origX+Math.sin(e.phase_t*0.8)*40;e.y=e.origY+Math.cos(e.phase_t*0.6)*30;}
+}
+
+var ix=0,iy=0;
+if(keys['w']||keys['arrowup'])iy-=1;
+if(keys['s']||keys['arrowdown'])iy+=1;
+if(keys['a']||keys['arrowleft'])ix-=1;
+if(keys['d']||keys['arrowright'])ix+=1;
+ix+=moveVec.x;iy+=moveVec.y;
+var len=Math.sqrt(ix*ix+iy*iy);
+var isMoving=len>0.05;
+if(isMoving){
+ix/=len;iy/=len;
+var speed=200;if(state.skills.indexOf('exp_1')>=0)speed*=1.15;
+var nx=state.player.x+ix*speed*dt,ny=state.player.y+iy*speed*dt;
+var blocked=false;
+for(var i=0;i<buildings.length;i++){var b=buildings[i];if(Math.abs(nx-b.x)<b.w/2+14&&Math.abs(ny-b.y)<b.h/2+14){blocked=true;break;}}
+if(!blocked&&Math.sqrt(nx*nx+ny*ny)<700){state.player.x=nx;state.player.y=ny;}
+if(Math.abs(ix)>Math.abs(iy))facing=ix>0?'right':'left';else facing=iy>0?'down':'up';
+walkPhase+=dt*10;
+} else walkPhase+=dt*1.5;
+
+if(state.hasCompanion){
+var cdx=state.player.x-companion.x,cdy=state.player.y-companion.y;
+var cd=Math.sqrt(cdx*cdx+cdy*cdy);
+if(cd>50){var csp=180;companion.x+=cdx/cd*csp*dt;companion.y+=cdy/cd*csp*dt;}
+companion.phase+=dt*8;
+}
+
+for(var i=coins.length-1;i>=0;i--){
+var c=coins[i];var dx=c.x-state.player.x,dy=c.y-state.player.y;
+if(dx*dx+dy*dy<900){
+if(!state.coins)state.coins={};if(!state.coins[state.player.region])state.coins[state.player.region]=[];
+state.coins[state.player.region].push(c.id);coins.splice(i,1);
+var totalCoins=0;Object.keys(state.coins).forEach(function(k){totalCoins+=state.coins[k].length;});
+addShards(5);checkBountyProgress('coin',1);
+burstParticles(c.x,c.y,8,'#FFD700');addFloatText(c.x,c.y-20,'+5💎','#FFD700');
+sfxCoin();companionSay(['Shiny!','A coin!','Ooh, treasure!']);
+if(totalCoins>=10)unlockAchievement('coin_10');
+if(totalCoins>=50)unlockAchievement('coin_50');
+save();
+}
+}
+for(var i=chests.length-1;i>=0;i--){
+var ch=chests[i];var dx=ch.x-state.player.x,dy=ch.y-state.player.y;
+if(dx*dx+dy*dy<1600){
+if(!state.chests)state.chests={};if(!state.chests[state.player.region])state.chests[state.player.region]=[];
+state.chests[state.player.region].push(ch.id);chests.splice(i,1);
+var totalChests=0;Object.keys(state.chests).forEach(function(k){totalChests+=state.chests[k].length;});
+var reward=20+Math.floor(Math.random()*20);
+addShards(reward);addXp(60);checkBountyProgress('chest',1);
+burstParticles(ch.x,ch.y,30,'#FFD700');burstParticles(ch.x,ch.y,15,'#EF5C11');
+addFloatText(ch.x,ch.y-30,'+'+reward+'💎  +60 XP','#FFD700',20);
+sfxChest();addShake(5);companionSay(['A chest!','What\'s inside?','Treasure!']);
+if(totalChests>=5)unlockAchievement('chest_5');
+save();
+}
+}
+
+cam.x+=(state.player.x-cam.x)*0.15;cam.y+=(state.player.y-cam.y)*0.15;
+
+var nearest=null,nd=Infinity;
+function checkDist(o,type,ref){var dx=o.x-state.player.x,dy=o.y-state.player.y;var d=Math.sqrt(dx*dx+dy*dy);if(d<70&&d<nd){nd=d;nearest={type:type,ref:ref,name:o.name||''};}}
+for(var i=0;i<npcs.length;i++)checkDist(npcs[i],'npc',npcs[i]);
+for(var i=0;i<enemies.length;i++)checkDist(enemies[i],'enemy',enemies[i]);
+var pd=Math.sqrt(Math.pow(0-state.player.x,2)+Math.pow(-260-state.player.y,2));
+if(pd<70&&pd<nd){nd=pd;nearest={type:'portal',name:'Portal Chamber'};}
+currentInteractable=nearest;
+var prompt=document.getElementById('interact-prompt');
+if(nearest){
+prompt.classList.remove('hidden');
+var label=nearest.type==='npc'?'Talk to '+nearest.name:nearest.type==='enemy'?'Fight '+nearest.name:'Use Portal';
+document.getElementById('interact-text').textContent=label;
+} else prompt.classList.add('hidden');
+
+// Arrow hint
+updateArrowHint();
+updateParticles(dt);
+}
+
+function updateArrowHint(){
+var el=document.getElementById('arrow-hint');
+var w=state.quests.welcome;
+if(w&&w.status!=='completed'&&!w.objectives.talk&&state.player.region==='academy'){
+var p=worldToScreen(NPC_DATA.archivist.x,NPC_DATA.archivist.y);
+el.style.left=p.x+'px';
+el.style.top=(p.y-80)+'px';
+el.classList.remove('hidden');
+} else if(w&&w.status==='in_progress'&&!w.objectives.library&&state.player.region==='academy'){
+var p=worldToScreen(-380,-240);
+el.style.left=p.x+'px';
+el.style.top=(p.y-80)+'px';
+el.classList.remove('hidden');
+} else {
+el.classList.add('hidden');
+}
+}
+
+// ===== COMBAT SCENE CANVAS =====
+var combatSceneCtx=null;
+function drawCombatScene(){
+if(!combatState)return;
+var sc=document.getElementById('combat-scene');
+if(!sc)return;
+if(!combatSceneCtx)combatSceneCtx=sc.getContext('2d');
+var c=combatSceneCtx;
+var CW=sc.width,CH=sc.height;
+c.clearRect(0,0,CW,CH);
+// Background gradient
+var bg=c.createLinearGradient(0,0,0,CH);
+bg.addColorStop(0,'#0a1a2e');bg.addColorStop(1,'#1a2a4e');
+c.fillStyle=bg;c.fillRect(0,0,CW,CH);
+// Ground line
+c.fillStyle='rgba(0,0,0,0.4)';c.fillRect(0,CH-30,CW,30);
+c.fillStyle='rgba(239,92,17,0.3)';c.fillRect(0,CH-30,CW,2);
+
+var t=Date.now()/300;
+// Player sprite (left)
+var px=100-cs_playerLunge*40;
+var py=CH-60;
+if(cs_playerHurtFlash>0&&Math.floor(t*10)%2===0){c.globalAlpha=0.5;}
+drawCombatPlayer(c,px,py,state.player,cs_playerLunge>0.1);
+c.globalAlpha=1;
+
+// Enemy sprite (right)
+var ex=CW-100+cs_enemyShake*(Math.random()-0.5)*20;
+var ey=CH-60;
+if(cs_enemyHurtFlash>0&&Math.floor(t*10)%2===0){c.globalAlpha=0.5;}
+var scale=combatState.enemy.phase===2?1.25:1;
+c.save();c.translate(ex,ey);c.scale(scale,scale);
+drawEnemySprite(c,0,0,{x:0,y:0,color:combatState.enemy.color,type:combatState.enemy.type},1,combatState.enemyHp/combatState.enemyMaxHp);
+c.restore();
+c.globalAlpha=1;
+
+// Attack flash
+if(cs_playerLunge>0.5){
+c.fillStyle='rgba(255,255,100,'+(cs_playerLunge-0.5)+')';
+c.fillRect(0,0,CW,CH);
+}
+if(cs_enemyHurtFlash>0.5){
+c.fillStyle='rgba(255,0,0,'+(cs_enemyHurtFlash-0.5)*0.6+')';
+c.fillRect(0,0,CW,CH);
+}
+
+// Boss phase banner
+if(combatState.enemy.phase===2){
+c.fillStyle='rgba(255,0,0,0.15)';c.fillRect(0,0,CW,CH);
+c.font='bold 14px system-ui';c.fillStyle='#FFD700';c.textAlign='center';
+c.fillText('👑 PHASE 2',CW/2,20);
+}
+}
+function drawCombatPlayer(c,x,y,char,lunging){
+// Simplified player in combat
+c.fillStyle='#3a2510';
+c.beginPath();c.ellipse(x-8,y+14,6,5,0,0,Math.PI*2);c.fill();
+c.beginPath();c.ellipse(x+8,y+14,6,5,0,0,Math.PI*2);c.fill();
+c.fillStyle='#1e2a4a';c.fillRect(x-11,y-2,8,18);c.fillRect(x+3,y-2,8,18);
+c.fillStyle=hex(char.outfit);
+c.beginPath();c.moveTo(x-14,y-16);c.lineTo(x+14,y-16);c.lineTo(x+12,y+2);c.lineTo(x-12,y+2);c.closePath();c.fill();
+c.fillStyle='#FFD700';c.fillRect(x-3,y-2,6,4);
+c.fillStyle=hex(char.skin);
+c.beginPath();c.ellipse(x-17,y-8,5,11,0,0,Math.PI*2);c.fill();
+c.beginPath();c.ellipse(x+17,y-8,5,11,0,0,Math.PI*2);c.fill();
+if(lunging){
+// Sword arm extended
+c.fillStyle='#C0C0C0';
+c.fillRect(x+20,y-22,20,4);
+}
+c.beginPath();c.arc(x,y-28,12,0,Math.PI*2);c.fill();
+c.fillStyle=hex(char.hair);c.beginPath();c.arc(x,y-30,12,Math.PI,Math.PI*2);c.fill();
+c.fillStyle='#111';c.fillRect(x-5,y-29,3,4);c.fillRect(x+2,y-29,3,4);
+}
+
+// Combat animation state
+var cs_playerLunge=0,cs_enemyShake=0,cs_playerHurtFlash=0,cs_enemyHurtFlash=0;
+function tickCombatAnim(){
+cs_playerLunge=Math.max(0,cs_playerLunge-0.08);
+cs_enemyShake=Math.max(0,cs_enemyShake-0.5);
+cs_playerHurtFlash=Math.max(0,cs_playerHurtFlash-0.06);
+cs_enemyHurtFlash=Math.max(0,cs_enemyHurtFlash-0.06);
+}
+setInterval(function(){if(combatState)tickCombatAnim();},50);
+
+// ===== RENDER =====
+function render(){
+if(!ctx)return;
+var r=REGIONS[state.player.region]||REGIONS.academy;
+drawGround(r);
+decor.forEach(function(d){if(d.type==='tree')drawTree(d.x,d.y);});
+coins.forEach(drawCoin);chests.forEach(drawChest);
+if(state.player.region==='academy')drawMonument();
+drawPortal();
+var list=[];
+buildings.forEach(function(b){list.push({y:b.y-1,type:'b',data:b});});
+npcs.forEach(function(n){list.push({y:n.y,type:'n',data:n});});
+enemies.forEach(function(e){list.push({y:e.y,type:'e',data:e});});
+list.push({y:state.player.y,type:'p',data:null});
+if(state.hasCompanion)list.push({y:companion.y,type:'c',data:null});
+list.sort(function(a,b){return a.y-b.y;});
+list.forEach(function(item){
+if(item.type==='b')drawBuilding(item.data);
+else if(item.type==='n')drawNPC(item.data);
+else if(item.type==='e')drawEnemy(item.data);
+else if(item.type==='p')drawSprite(state.player.x,state.player.y,state.player,facing,walkPhase,state.player.name);
+else if(item.type==='c')drawCompanion();
+});
+drawParticles();
+var dayT=(Math.sin(dayCycle)+1)/2;
+if(dayT<0.3){ctx.fillStyle='rgba(10,20,60,'+((0.3-dayT)*0.7)+')';ctx.fillRect(0,0,W,H);}
+if(weather.type==='rain'){ctx.fillStyle='rgba(20,30,60,0.15)';ctx.fillRect(0,0,W,H);}
+if(state.settings.minimap&&!document.getElementById('hud').classList.contains('hidden'))drawMinimap();
+}
+function drawMinimap(){
+var mc=document.getElementById('minimap-canvas');if(!mc)return;
+var m=mc.getContext('2d');var W2=mc.width,H2=mc.height;
+m.clearRect(0,0,W2,H2);
+m.fillStyle=REGIONS[state.player.region].bg1;m.fillRect(0,0,W2,H2);
+var scale=W2/1400;function toMap(x,y){return {x:W2/2+x*scale,y:H2/2+y*scale};}
+buildings.forEach(function(b){var p=toMap(b.x,b.y);m.fillStyle=b.c;m.fillRect(p.x-b.w*scale/2,p.y-b.h*scale/2,Math.max(3,b.w*scale),Math.max(3,b.h*scale));});
+npcs.forEach(function(n){var p=toMap(n.x,n.y);m.fillStyle='#4caf50';m.beginPath();m.arc(p.x,p.y,3,0,Math.PI*2);m.fill();});
+enemies.forEach(function(e){var p=toMap(e.x,e.y);m.fillStyle=e.tier>=3?'#FF00FF':'#F44336';m.beginPath();m.arc(p.x,p.y,e.tier>=3?4:3,0,Math.PI*2);m.fill();});
+coins.forEach(function(c){var p=toMap(c.x,c.y);m.fillStyle='#FFD700';m.beginPath();m.arc(p.x,p.y,2,0,Math.PI*2);m.fill();});
+chests.forEach(function(c){var p=toMap(c.x,c.y);m.fillStyle='#FFA500';m.fillRect(p.x-2,p.y-2,4,4);});
+var pp=toMap(0,-260);m.fillStyle='#6a4cff';m.beginPath();m.arc(pp.x,pp.y,3,0,Math.PI*2);m.fill();
+var player=toMap(state.player.x,state.player.y);
+m.fillStyle='#fff';m.beginPath();m.arc(player.x,player.y,4,0,Math.PI*2);m.fill();
+m.strokeStyle='#EF5C11';m.lineWidth=2;m.stroke();
+}
+
+function loop(time){
+var dt=Math.min((time-lastTime)/1000,0.05)||0;lastTime=time;
+update(dt);render();requestAnimationFrame(loop);
+}
+
+// ===== INPUT =====
+function isTypingTarget(el){
+if(!el)return false;
+var tag=(el.tagName||'').toUpperCase();
+return tag==='INPUT'||tag==='TEXTAREA'||el.isContentEditable;
+}
+function initInput(){
+window.addEventListener('keydown',function(e){
+var k=e.key.toLowerCase();
+if(k==='escape'){closeAllPanels();return;}
+if(isTypingTarget(e.target))return;
+if(e.target&&e.target.tagName==='BUTTON'&&(k===' '||k==='enter'))return;
+keys[k]=true;
+if(k===' '){e.preventDefault();tryInteract();}
+if(k==='b')togglePanel('bounties');
+if(k==='q')toggleJournal();
+if(k==='p')togglePanel('portals');
+if(k==='k')togglePanel('skilltree');
+if(k==='l')togglePanel('achievements');
+if(k==='o')togglePanel('settings');
+if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].indexOf(k)>=0)e.preventDefault();
+});
+window.addEventListener('keyup',function(e){keys[e.key.toLowerCase()]=false;});
+window.addEventListener('blur',function(){for(var k in keys)keys[k]=false;});
+
+var joy=document.getElementById('joystick'),knob=document.getElementById('joystick-knob');
+var active=false,cx=0,cy=0;
+function start(e){e.preventDefault();active=true;var r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;}
+function move(e){if(!active)return;e.preventDefault();var t=e.touches?e.touches[0]:e;var dx=t.clientX-cx,dy=t.clientY-cy,max=40;var dist=Math.min(Math.sqrt(dx*dx+dy*dy),max),ang=Math.atan2(dy,dx);var kx=Math.cos(ang)*dist,ky=Math.sin(ang)*dist;knob.style.transform='translate(calc(-50% + '+kx+'px), calc(-50% + '+ky+'px))';moveVec.x=kx/max;moveVec.y=ky/max;}
+function end(e){e.preventDefault();active=false;knob.style.transform='translate(-50%, -50%)';moveVec.x=0;moveVec.y=0;}
+joy.addEventListener('touchstart',start);joy.addEventListener('touchmove',move);joy.addEventListener('touchend',end);
+joy.addEventListener('mousedown',start);
+window.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+document.getElementById('touch-interact').addEventListener('click',tryInteract);
+if('ontouchstart' in window||navigator.maxTouchPoints>0){
+document.getElementById('touch-controls').classList.add('visible');
+document.getElementById('touch-interact').classList.add('visible');
+}
+}
+function tryInteract(){
+if(!currentInteractable)return;
+sfxInteract();
+if(currentInteractable.type==='npc')openDialogue(currentInteractable.ref.id);
+else if(currentInteractable.type==='enemy')startCombat(currentInteractable.ref);
+else if(currentInteractable.type==='portal')togglePanel('portals');
+}
+
+// ===== DIALOGUE =====
+var DIALOGUES={
+archivist:function(){
+if(!state.quests.welcome){state.quests.welcome={status:'in_progress',objectives:{talk:false,library:false}};save();}
+var w=state.quests.welcome;
+if(!w.objectives.talk)return{speaker:'📚 Archivist Lira',text:'Welcome, Scholar Adventurer. The Great Forgetting has drained the knowledge crystals. Every concept you master restores a fragment of Aetheria.',choices:[{text:'How do I help?',action:'accept_welcome'},{text:'What regions exist?',next:'archivist_regions'}]};
+if(!w.objectives.library)return{speaker:'📚 Archivist Lira',text:'Visit the Grand Library to the west. Study there and return.',choices:[{text:'I will.',action:'close'},{text:'What regions exist?',next:'archivist_regions'}]};
+if(w.status!=='completed'){w.status='completed';save();addXp(80);sfxQuest();companionSay(['You did it!','Progress!']);
+return{speaker:'📚 Archivist Lira',text:"You've done well. Professor Arith has need of your mind.",choices:[{text:'Thank you.',action:'close'}]};}
+return{speaker:'📚 Archivist Lira',text:'Keep learning. Every region holds its own challenges.',choices:[{text:'Goodbye.',action:'close'}]};
+},
+archivist_regions:{speaker:'📚 Archivist Lira',text:'Seven regions surround us. Numeria for mathematics. Eloquentia for language. Chronicle for history. Atlas for geography. The Quantum Wilds for science. The Binary Realm for code. And the Grandmaster\'s Domain for chess.',choices:[{text:'How do I reach them?',next:'archivist_portals'},{text:'Tell me about one.',next:'archivist_details'},{text:'Farewell.',action:'close'}]},
+archivist_portals:{speaker:'📚 Archivist Lira',text:'The Portal Chamber. Each region unlocks when you demonstrate competence. Start with Numeria — Professor Arith will guide you.',choices:[{text:'Understood.',action:'close'},{text:'Back to regions.',next:'archivist_regions'}]},
+archivist_details:{speaker:'📚 Archivist Lira',text:'Numeria teaches you to reason with numbers. Eloquentia teaches you to master words. The others teach history, geography, science, code, and chess.',choices:[{text:'Thank you.',action:'close'},{text:'Back.',next:'archivist_regions'}]},
+arith:function(){
+if(!state.quests.numeria)return{speaker:'🔮 Professor Arith',text:'You wish to reach Numeria. Prove yourself: solve one equation and one fraction puzzle.',choices:[{text:"I'm ready.",action:'start_numeria_gate'},{text:'Not yet.',action:'close'}]};
+var n=state.quests.numeria;
+if(n.objectives.equation&&n.objectives.fraction&&!n.rewarded){
+n.rewarded=true;
+if(!REGIONS.numeria.unlocked){REGIONS.numeria.unlocked=true;if(state.unlockedRegions.indexOf('numeria')<0)state.unlockedRegions.push('numeria');unlockAchievement('numeria_hero');toast('🌀 Numeria is now accessible');sfxQuest();}
+save();
+return{speaker:'🔮 Professor Arith',text:'Excellent. The way to Numeria is open.',choices:[{text:'Thank you.',action:'close'}]};
+}
+if(n.rewarded)return{speaker:'🔮 Professor Arith',text:'Numeria awaits. Solve its challenges to unlock the other regions.',choices:[{text:'I will.',action:'close'}]};
+return{speaker:'🔮 Professor Arith',text:n.objectives.equation?'Now the fractions.':'Solve the equation first.',choices:[{text:'Begin.',action:n.objectives.equation?'start_frac_test':'start_eq_test'},{text:'Later.',action:'close'}]};
+},
+numerian_sage:function(){
+if(!state.quests.numeria_master){state.quests.numeria_master={status:'in_progress',objectives:{seq:false,geom:false}};save();}
+var q=state.quests.numeria_master;
+if(q.status==='completed')return{speaker:'🧙 Numerian Sage',text:'You have mastered Numeria. All regions are open.',choices:[{text:'Thank you.',action:'close'}]};
+if(q.objectives.seq&&q.objectives.geom){
+q.status='completed';save();addXp(150);addShards(50);sfxQuest();toast('📜 Quest complete: Numeria Master');
+['eloquentia','chronicle','atlas','quantum','binary','grandmaster'].forEach(function(rid){if(!REGIONS[rid].unlocked){REGIONS[rid].unlocked=true;if(state.unlockedRegions.indexOf(rid)<0)state.unlockedRegions.push(rid);}});
+toast('🌀 All regions are now accessible!');save();
+return{speaker:'🧙 Numerian Sage',text:'The way is open. All regions await you in the Portal Chamber.',choices:[{text:'Thank you.',action:'close'}]};
+}
+if(!q.objectives.seq)return{speaker:'🧙 Numerian Sage',text:'The sequence still awaits.',choices:[{text:'Let me try.',action:'start_seq'},{text:'Later.',action:'close'}]};
+return{speaker:'🧙 Numerian Sage',text:'Now the geometry puzzle.',choices:[{text:'Give me the puzzle.',action:'start_geom'},{text:'Later.',action:'close'}]};
+},
+librarian_ess:function(){
+if(!state.quests.english_master){state.quests.english_master={status:'in_progress',objectives:{vocab:false,grammar:false}};save();}
+var q=state.quests.english_master;
+if(q.status==='completed')return{speaker:'📖 Librarian Ess',text:"You've restored much of Eloquentia.",choices:[{text:'Goodbye.',action:'close'}]};
+if(!q.objectives.vocab)return{speaker:'📖 Librarian Ess',text:"The Library's stories are corrupted. Solve the vocabulary riddle.",choices:[{text:'Give me the riddle.',action:'start_vocab'},{text:'Later.',action:'close'}]};
+if(!q.objectives.grammar)return{speaker:'📖 Librarian Ess',text:'Now the grammar puzzle.',choices:[{text:'Begin.',action:'start_grammar'},{text:'Later.',action:'close'}]};
+q.status='completed';save();addXp(150);addShards(50);sfxQuest();toast('📜 Quest complete: Eloquentia Restored');
+return{speaker:'📖 Librarian Ess',text:'The stories breathe again.',choices:[{text:'Thank you.',action:'close'}]};
+},
+chronicler_roy:function(){
+if(!state.quests.history_master){state.quests.history_master={status:'in_progress',objectives:{timeline:false}};save();}
+var q=state.quests.history_master;
+if(q.status==='completed')return{speaker:'🏛️ Chronicler Roy',text:'History remembers you.',choices:[{text:'Goodbye.',action:'close'}]};
+return{speaker:'🏛️ Chronicler Roy',text:'Time is fractured. Reconstruct the order of events.',choices:[{text:'Give me the timeline puzzle.',action:'start_timeline'},{text:'Later.',action:'close'}]};
+},
+ranger_kess:function(){
+if(!state.quests.geo_master){state.quests.geo_master={status:'in_progress',objectives:{capital:false}};save();}
+var q=state.quests.geo_master;
+if(q.status==='completed')return{speaker:'🧭 Ranger Kess',text:'You know the world now.',choices:[{text:'Goodbye.',action:'close'}]};
+return{speaker:'🧭 Ranger Kess',text:'Name the capital to prove your geographic knowledge.',choices:[{text:'Ask me.',action:'start_capital'},{text:'Later.',action:'close'}]};
+},
+scientist_nyx:function(){
+if(!state.quests.sci_master){state.quests.sci_master={status:'in_progress',objectives:{hypothesis:false}};save();}
+var q=state.quests.sci_master;
+if(q.status==='completed')return{speaker:'🔬 Scientist Nyx',text:'Your experiments have restored balance.',choices:[{text:'Goodbye.',action:'close'}]};
+return{speaker:'🔬 Scientist Nyx',text:'Which gas do plants absorb for photosynthesis?',choices:[{text:'Test me.',action:'start_hypothesis'},{text:'Later.',action:'close'}]};
+},
+programmer_axi:function(){
+if(!state.quests.code_master){state.quests.code_master={status:'in_progress',objectives:{loop:false}};save();}
+var q=state.quests.code_master;
+if(q.status==='completed')return{speaker:'💻 Programmer Axi',text:"You've debugged the realm.",choices:[{text:'Goodbye.',action:'close'}]};
+return{speaker:'💻 Programmer Axi',text:"How many times does 'for i in range(4): print(i)' print?",choices:[{text:'Test me.',action:'start_loop'},{text:'Later.',action:'close'}]};
+},
+grandmaster_rai:function(){
+if(!state.quests.chess_master){state.quests.chess_master={status:'in_progress',objectives:{tactic:false}};save();}
+var q=state.quests.chess_master;
+if(q.status==='completed')return{speaker:'♟ Grandmaster Rai',text:'You see the board clearly now.',choices:[{text:'Goodbye.',action:'close'}]};
+return{speaker:'♟ Grandmaster Rai',text:'A knight on e4 can reach f6 in one move. True or false?',choices:[{text:'Answer.',action:'start_tactic'},{text:'Later.',action:'close'}]};
+},
+codian:function(){return{speaker:'⚒ Master Codian',text:'Crafting will come later. For now, explore and learn.',choices:[{text:'Understood.',action:'close'}]};},
+vex:function(){return{speaker:'♟ Strategist Vex',text:'Grandmaster Rai is in his Domain. Unlock the region first.',choices:[{text:"I'll find him.",action:'close'}]};}
+};
+function openDialogue(id){
+var fn=DIALOGUES[id];if(!fn)return;
+if(state.seenNPCs.indexOf(id)<0){state.seenNPCs.push(id);checkBountyProgress('npc',1);}
+sfxDialogue();
+var d=typeof fn==='function'?fn():fn;
+renderDialogue(d);
+companionSay(['Interesting...','Hello!','A new friend!']);
+}
+function renderDialogue(d){
+document.getElementById('dialogue').classList.remove('hidden');
+document.getElementById('dialogue-speaker').textContent=d.speaker;
+document.getElementById('dialogue-text').textContent=d.text;
+var c=document.getElementById('dialogue-choices');c.innerHTML='';
+d.choices.forEach(function(ch){
+var b=document.createElement('button');b.className='dialogue-choice';b.textContent=ch.text;
+b.onclick=function(){handleDialogueChoice(ch);};c.appendChild(b);
+});
+}
+function handleDialogueChoice(c){
+if(c.action==='close')return closeDialogue();
+if(c.action==='accept_welcome'){state.quests.welcome.objectives.talk=true;unlockAchievement('talk_archivist');save();toast('📜 Quest updated: Visit the Grand Library');updateQuestTracker();return closeDialogue();}
+if(c.action==='start_numeria_gate'){state.quests.numeria={status:'in_progress',objectives:{equation:false,fraction:false},rewarded:false};save();closeDialogue();return openPuzzle('gate_equation');}
+if(c.action==='start_eq_test'){closeDialogue();return openPuzzle('gate_equation');}
+if(c.action==='start_frac_test'){closeDialogue();return openPuzzle('gate_fraction');}
+if(c.action==='start_seq'){closeDialogue();return openPuzzle('numeria_seq');}
+if(c.action==='start_geom'){closeDialogue();return openPuzzle('numeria_geom');}
+if(c.action==='start_vocab'){closeDialogue();return openPuzzle('english_vocab');}
+if(c.action==='start_grammar'){closeDialogue();return openPuzzle('english_grammar');}
+if(c.action==='start_timeline'){closeDialogue();return openPuzzle('history_timeline');}
+if(c.action==='start_capital'){closeDialogue();return openPuzzle('geo_capital');}
+if(c.action==='start_hypothesis'){closeDialogue();return openPuzzle('sci_hypothesis');}
+if(c.action==='start_loop'){closeDialogue();return openPuzzle('code_loop');}
+if(c.action==='start_tactic'){closeDialogue();return openPuzzle('chess_tactic');}
+if(c.next){var nd=DIALOGUES[c.next];if(nd){if(typeof nd==='function')return renderDialogue(nd());return renderDialogue(nd);}}
+}
+function closeDialogue(){document.getElementById('dialogue').classList.add('hidden');blurAll();}
+
+// ===== COMPANION NAME =====
+function promptCompanionName(){
+document.getElementById('companion-name').classList.remove('hidden');
+setTimeout(function(){var el=document.getElementById('companion-input');if(el){el.value='';el.focus();}},200);
+}
+function confirmCompanionName(){
+var raw=document.getElementById('companion-input').value||'';
+var n=raw.trim().slice(0,16)||'Mochi';
+state.companionName=n;save();
+closePanel('companion-name');
+toast('🐾 Your companion is named '+n+'!');
+companionSay(['Hello, I\'m '+n+'!','Nice to meet you!']);
+}
+
+// ===== JOURNAL =====
+var QUEST_META={
+welcome:{name:'Welcome to the Academy',desc:'Speak with Archivist Lira and visit the Grand Library.',objectives:[{key:'talk',label:'Speak with Archivist Lira'},{key:'library',label:'Visit the Grand Library'}]},
+numeria:{name:'The Gate to Numeria',desc:'Solve two mathematical challenges.',objectives:[{key:'equation',label:'Solve the equation'},{key:'fraction',label:'Solve the fraction puzzle'}]},
+numeria_master:{name:'Numeria Master',desc:'Prove mastery of sequence and geometry.',objectives:[{key:'seq',label:'Solve a number sequence'},{key:'geom',label:'Solve a geometry puzzle'}]},
+english_master:{name:'Eloquentia Restored',desc:'Restore the corrupted stories.',objectives:[{key:'vocab',label:'Solve the vocabulary riddle'},{key:'grammar',label:'Solve the grammar puzzle'}]},
+history_master:{name:'The Fractured Timeline',desc:'Reconstruct history.',objectives:[{key:'timeline',label:'Order the historical events'}]},
+geo_master:{name:'Atlas Master',desc:'Demonstrate geographic knowledge.',objectives:[{key:'capital',label:'Name the capital'}]},
+sci_master:{name:'Quantum Hypothesis',desc:'Test a scientific hypothesis.',objectives:[{key:'hypothesis',label:'Answer the science question'}]},
+code_master:{name:'Binary Debugger',desc:'Debug the loop.',objectives:[{key:'loop',label:'Answer the coding question'}]},
+chess_master:{name:'Strategic Mind',desc:'Show chess understanding.',objectives:[{key:'tactic',label:'Answer the chess puzzle'}]}
+};
+function setQuestObjective(qid,key){
+if(!state.quests[qid])state.quests[qid]={status:'in_progress',objectives:{}};
+state.quests[qid].objectives[key]=true;save();updateQuestTracker();
+}
+function toggleJournal(){var j=document.getElementById('journal');j.classList.toggle('open');if(j.classList.contains('open'))renderJournal();}
+function renderJournal(){
+var el=document.getElementById('journal-content');
+var entries=Object.keys(state.quests);
+if(entries.length===0){el.innerHTML='<div style="opacity:.6;font-size:13px">No active quests. Explore and talk to NPCs.</div>';return;}
+var html='';
+var regionMap={welcome:'Academy',numeria:'Numeria',numeria_master:'Numeria',english_master:'Eloquentia',history_master:'Chronicle',geo_master:'Atlas',sci_master:'Quantum',code_master:'Binary',chess_master:'Grandmaster'};
+entries.forEach(function(id){
+var q=state.quests[id],meta=QUEST_META[id]||{name:id,desc:'',objectives:[]};
+html+='<div class="quest-entry '+(q.status==='completed'?'completed':'')+'">';
+if(regionMap[id])html+='<div class="quest-region">'+regionMap[id]+'</div>';
+html+='<div class="quest-name">'+meta.name+'</div><div class="quest-desc">'+meta.desc+'</div>';
+meta.objectives.forEach(function(o){var done=q.objectives&&q.objectives[o.key];html+='<div class="quest-objective '+(done?'done':'pending')+'">'+o.label+'</div>';});
+if(q.status==='completed')html+='<div style="font-size:11px;color:#4CAF50;margin-top:6px;font-weight:700">✓ COMPLETED</div>';
+html+='</div>';
+});
+el.innerHTML=html;
+}
+
+setInterval(function(){
+if(state.settings&&state.settings.minimap!==undefined){document.getElementById('minimap').classList.toggle('show',state.settings.minimap&&!document.getElementById('hud').classList.contains('hidden'));}
+var w=state.quests.welcome;
+if(w&&w.status==='in_progress'&&!w.objectives.library){
+var dx=state.player.x-(-380),dy=state.player.y-(-240);
+if(Math.sqrt(dx*dx+dy*dy)<180){w.objectives.library=true;w.status='completed';toast('📜 Quest complete: Welcome to the Academy');addXp(80);addShards(30);sfxQuest();save();updateQuestTracker();}
+}
+if(state.skills.indexOf('exp_3')>=0&&state.player.hp<state.player.maxHp){state.player.hp=Math.min(state.player.maxHp,state.player.hp+1);updateHud();}
+},1000);
+
+// ===== PUZZLES =====
+var currentPuzzle=null;
+var PUZZLES={
+gate_equation:{title:'EQUATION — Gate to Numeria',question:'Solve for x:',sequence:['5x − 8 = 27'],validator:function(a){return Math.abs(parseFloat(a.replace(/\s/g,'').replace(/^x=/i,''))-7)<1e-6;},hint:'Add 8 to both sides. Then divide by 5.',explanation:'5x − 8 = 27 → 5x = 35 → x = 7.',subject:'mathematics',topic:'linear_equations',xp:80,shards:20,onComplete:function(){state.quests.numeria.objectives.equation=true;save();}},
+gate_fraction:{title:'FRACTION — Gate to Numeria',question:'You have 360 gold. You spend 2/9 on a book and 1/6 on ink. How much remains?',sequence:['Total: 360','Book: 2/9','Ink: 1/6','Remaining: ?'],validator:function(a){return Math.abs(parseFloat(a.trim())-220)<1e-6;},hint:'2/9 + 1/6 = 7/18. Remaining = 11/18. 11/18 × 360 = ?',explanation:'7/18 spent → 11/18 remains. 11/18 × 360 = 220.',subject:'mathematics',topic:'fractions',xp:90,shards:25,onComplete:function(){state.quests.numeria.objectives.fraction=true;save();}},
+numeria_seq:{title:'NUMBER SEQUENCE',question:'What comes next?',sequence:['1,  4,  9,  16,  25,  __'],validator:function(a){return a.trim()==='36';},hint:'Perfect squares.',explanation:'6² = 36.',subject:'mathematics',topic:'sequences',xp:100,shards:30,onComplete:function(){setQuestObjective('numeria_master','seq');}},
+numeria_geom:{title:'GEOMETRY PUZZLE',question:'A right triangle has legs of 6 and 8. What is the hypotenuse?',sequence:['a = 6','b = 8','c = ?'],validator:function(a){return Math.abs(parseFloat(a.trim())-10)<1e-6;},hint:'a² + b² = c²',explanation:'6² + 8² = 100. √100 = 10.',subject:'mathematics',topic:'geometry',xp:120,shards:35,onComplete:function(){setQuestObjective('numeria_master','geom');}},
+english_vocab:{title:'VOCABULARY RIDDLE',question:'Which word means "a person who loves books and reading"?',sequence:['(a) misanthrope','(b) bibliophile','(c) philanthropist'],validator:function(a){return ['b','bibliophile'].indexOf(a.trim().toLowerCase())>=0;},hint:'"Biblio-" refers to books.',explanation:'A bibliophile is a lover of books.',subject:'english',topic:'vocabulary',xp:100,shards:30,onComplete:function(){setQuestObjective('english_master','vocab');}},
+english_grammar:{title:'GRAMMAR PUZZLE',question:'Which sentence is grammatically correct?',sequence:['(a) "Me and him went to the store."','(b) "He and I went to the store."','(c) "Him and me went to the store."'],validator:function(a){var v=a.trim().toLowerCase();return v==='b'||v.indexOf('he and i')>=0;},hint:'Remove the other person: "I went" ✓',explanation:'"He and I" is the subject form.',subject:'english',topic:'grammar',xp:110,shards:30,onComplete:function(){setQuestObjective('english_master','grammar');}},
+history_timeline:{title:'HISTORICAL TIMELINE',question:'Enter 1, 2, or 3 in order of earliest to latest:',sequence:['(1) Fall of the Berlin Wall','(2) American Declaration of Independence','(3) End of WWII'],validator:function(a){return a.replace(/\s/g,'')==='231';},hint:'1776 → 1945 → 1989.',explanation:'1776, 1945, 1989 → 2, 3, 1.',subject:'history',topic:'modern_history',xp:130,shards:40,onComplete:function(){setQuestObjective('history_master','timeline');}},
+geo_capital:{title:'GEOGRAPHY — CAPITALS',question:'What is the capital of Australia?',sequence:['(a) Sydney','(b) Melbourne','(c) Canberra','(d) Perth'],validator:function(a){var v=a.trim().toLowerCase();return v==='c'||v.indexOf('canberra')>=0;},hint:'Purpose-built compromise.',explanation:'Canberra is the capital.',subject:'geography',topic:'capitals',xp:120,shards:35,onComplete:function(){setQuestObjective('geo_master','capital');}},
+sci_hypothesis:{title:'SCIENTIFIC REASONING',question:'Which gas do plants absorb during photosynthesis?',sequence:['(a) Oxygen','(b) Carbon dioxide','(c) Nitrogen','(d) Hydrogen'],validator:function(a){var v=a.trim().toLowerCase();return v==='b'||v.indexOf('carbon')>=0;},hint:'Plants take in this, release O₂.',explanation:'Plants absorb CO₂ and release O₂.',subject:'science',topic:'biology',xp:130,shards:35,onComplete:function(){setQuestObjective('sci_master','hypothesis');}},
+code_loop:{title:'CODING — LOOPS',question:"How many times does this print? Enter a number.",sequence:['for i in range(4):','    print(i)'],validator:function(a){return a.trim()==='4';},hint:'range(4) yields 0,1,2,3.',explanation:'4 iterations.',subject:'coding',topic:'loops',xp:140,shards:40,onComplete:function(){setQuestObjective('code_master','loop');}},
+chess_tactic:{title:'CHESS — KNIGHT MOVE',question:'A knight on e4 can reach f6 in one move. True or false?',sequence:['Knight at e4','Target: f6'],validator:function(a){return ['true','yes','y','t'].indexOf(a.trim().toLowerCase())>=0;},hint:'e4 → f6 is 2+1 L-shape.',explanation:'True. Legal knight move.',subject:'chess',topic:'piece_movement',xp:140,shards:40,onComplete:function(){setQuestObjective('chess_master','tactic');}}
+};
+function openPuzzle(id){
+var p=PUZZLES[id];if(!p)return;
+currentPuzzle=id;
+document.getElementById('puzzle-title').textContent=p.title;
+document.getElementById('puzzle-question').textContent=p.question;
+document.getElementById('puzzle-sequence').innerHTML=p.sequence.map(function(s){return '<div>'+s+'</div>';}).join('');
+document.getElementById('puzzle-input').value='';
+document.getElementById('puzzle-feedback').className='modal-feedback hidden';
+document.getElementById('puzzle').classList.remove('hidden');
+setTimeout(function(){document.getElementById('puzzle-input').focus();},100);
+}
+
+// ===== COMBAT =====
+var combatState=null;
+var COMBAT_Q={
+mathematics:[
+{q:'What is 12 × 8?',a:'96',hint:'12 × 8 = 96.',tier:1},{q:'Solve: x + 15 = 42',a:'27',hint:'Subtract 15.',tier:1},{q:'What is 7²?',a:'49',hint:'7 × 7 = 49.',tier:1},{q:'What is 45 ÷ 5?',a:'9',hint:'5 × 9 = 45.',tier:1},{q:'What is 17 + 26?',a:'43',hint:'17 + 26 = 43.',tier:1},{q:'What is 100 − 37?',a:'63',hint:'100 − 37 = 63.',tier:1},{q:'What is 6 × 7?',a:'42',hint:'6 × 7 = 42.',tier:1},{q:'What is 20% of 50?',a:'10',hint:'10% of 50 is 5.',tier:1},
+{q:'Solve: 3x = 27',a:'9',hint:'Divide by 3.',tier:2},{q:'What is √144?',a:'12',hint:'12 × 12 = 144.',tier:2},{q:'What is 2⁴?',a:'16',hint:'2×2×2×2.',tier:2},{q:'Solve: 2x + 5 = 17',a:'6',hint:'Subtract 5, divide by 2.',tier:2},{q:'What is 15% of 200?',a:'30',hint:'10% is 20, 5% is 10.',tier:2},{q:'What is 144 ÷ 12?',a:'12',hint:'12 × 12 = 144.',tier:2},{q:'What is 8 × 9?',a:'72',hint:'8 × 9 = 72.',tier:2},
+{q:'Solve: x² = 81',a:'9',hint:'What times itself is 81?',tier:3},{q:'Solve: 3x + 7 = 22',a:'5',hint:'3x = 15.',tier:3},{q:'What is 5 + 3 × 4?',a:'17',hint:'Multiplication before addition.',tier:3},{q:'What is √169?',a:'13',hint:'13 × 13 = 169.',tier:3},{q:'Solve: x/4 = 6',a:'24',hint:'Multiply by 4.',tier:3}
+],
+english:[
+{q:'Plural of "child"?',a:'children',hint:'Irregular plural.',tier:1},{q:'Synonym of "happy"?',a:'joyful',hint:'Opposite of sad.',tier:1},{q:'Adverb form of "quick"?',a:'quickly',hint:'Add -ly.',tier:1},{q:'Plural of "mouse"?',a:'mice',hint:'Irregular plural.',tier:1},{q:'Past tense of "run"?',a:'ran',hint:'Irregular verb.',tier:1},{q:'Antonym of "ancient"?',a:'modern',hint:'Opposite of old.',tier:1},
+{q:'Group of lions is called a?',a:'pride',hint:'Also a feeling.',tier:2},{q:'Past tense of "eat"?',a:'ate',hint:'Irregular verb.',tier:2},{q:'Antonym of "brave"?',a:'cowardly',hint:'Opposite of courageous.',tier:2},{q:'Synonym of "big"?',a:'large',hint:'Common word.',tier:2},{q:'Plural of "sheep"?',a:'sheep',hint:'Same in singular.',tier:2},{q:'Past tense of "sing"?',a:'sang',hint:'Irregular verb.',tier:2},
+{q:'Word reading same backwards?',a:'palindrome',hint:'Like "racecar".',tier:3},{q:'Word opposite in meaning?',a:'antonym',hint:'Opposite of synonym.',tier:3},{q:'Study of word origins?',a:'etymology',hint:'Starts with "etym".',tier:3},{q:'A comparison using "like" or "as"?',a:'simile',hint:'Not a metaphor.',tier:3}
+],
+science:[
+{q:'H₂O is commonly called?',a:'water',hint:'You drink it.',tier:1},{q:'Red Planet?',a:'mars',hint:'Fourth from sun.',tier:1},{q:'Force keeping us on ground?',a:'gravity',hint:'Newton.',tier:1},{q:'Gas we breathe in?',a:'oxygen',hint:'O₂.',tier:1},{q:'Closest star to Earth?',a:'sun',hint:'Rises each morning.',tier:1},{q:'Frozen water is called?',a:'ice',hint:'Solid form.',tier:1},
+{q:'Largest planet in our solar system?',a:'jupiter',hint:'Has a Great Red Spot.',tier:2},{q:'How many legs does a spider have?',a:'8',hint:'More than 6.',tier:2},{q:'Chemical symbol for gold?',a:'au',hint:'From Latin "aurum".',tier:2},{q:'What do plants produce in photosynthesis?',a:'oxygen',hint:'We breathe it.',tier:2},{q:'Chemical symbol for water?',a:'h2o',hint:'Two H, one O.',tier:2},
+{q:'What causes ocean tides?',a:'moon',hint:'Earth\'s satellite.',tier:3},{q:'Powerhouse of the cell?',a:'mitochondria',hint:'Starts with "mito".',tier:3},{q:'Speed of light unit? (symbol)',a:'c',hint:'Single letter.',tier:3},{q:'Noble gas used in balloons?',a:'helium',hint:'Lighter than air.',tier:3}
+],
+geography:[
+{q:'Largest ocean?',a:'pacific',hint:'Between Asia & Americas.',tier:1},{q:'How many continents?',a:'7',hint:'Africa, Asia, ...',tier:1},{q:'Longest river? (Nile/Amazon)',a:'nile',hint:'In Africa.',tier:1},{q:'Capital of France?',a:'paris',hint:'Eiffel Tower.',tier:1},{q:'Capital of Japan?',a:'tokyo',hint:'Land of the rising sun.',tier:1},{q:'Which continent is Egypt in?',a:'africa',hint:'South of Europe.',tier:1},
+{q:'Largest desert? (Sahara/Antarctica)',a:'antarctica',hint:'Cold desert.',tier:2},{q:'Which is bigger? (Asia/Africa)',a:'asia',hint:'Largest continent.',tier:2},{q:'Capital of Nigeria?',a:'abuja',hint:'Not Lagos.',tier:2},{q:'Largest country by area?',a:'russia',hint:'Across two continents.',tier:2},{q:'Capital of the USA?',a:'washington',hint:'Not New York.',tier:2},
+{q:'Amazon rainforest is in which continent?',a:'south america',hint:'Southern hemisphere.',tier:3},{q:'Longest mountain range on land?',a:'andes',hint:'In South America.',tier:3},{q:'Smallest country in the world?',a:'vatican',hint:'In Rome.',tier:3}
+],
+history:[
+{q:'Year WWII ended?',a:'1945',hint:'Mid-1940s.',tier:1},{q:'First US President? (last name)',a:'washington',hint:'George...',tier:1},{q:'Great Wall country?',a:'china',hint:'East Asia.',tier:1},{q:'Pyramids are in which country?',a:'egypt',hint:'Northeast Africa.',tier:1},
+{q:'Who wrote the Declaration of Independence? (last name)',a:'jefferson',hint:'Thomas...',tier:2},{q:'Which war was 1914–1918?',a:'world war 1',hint:'The first of two.',tier:2},{q:'First man on the moon? (last name)',a:'armstrong',hint:'Neil...',tier:2},
+{q:'Ancient civilization that built the Colosseum?',a:'rome',hint:'Italy\'s capital city.',tier:3},{q:'Year the Berlin Wall fell?',a:'1989',hint:'Late 1980s.',tier:3}
+],
+coding:[
+{q:'Bits in a byte?',a:'8',hint:'Less than 10.',tier:1},{q:'HTML first word?',a:'hypertext',hint:'Markup language.',tier:1},{q:'Symbol assigns value? (x=5)',a:'=',hint:'Single character.',tier:1},{q:'Binary digit — 0 or 1? (spell)',a:'bit',hint:'Short for binary digit.',tier:1},
+{q:'What does CPU stand for? (first word)',a:'central',hint:'Brain of the computer.',tier:2},{q:'A loop that never ends is called?',a:'infinite',hint:'No end.',tier:2},{q:'Language for web styling? (3 letters)',a:'css',hint:'Cascading Style Sheets.',tier:2},
+{q:'True/false is what type?',a:'boolean',hint:'Named after a mathematician.',tier:3},{q:'What does a variable store?',a:'value',hint:'Can change.',tier:3}
+],
+chess:[
+{q:'Squares on a chessboard?',a:'64',hint:'8 × 8.',tier:1},{q:'Pawns per player?',a:'8',hint:'One full rank.',tier:1},{q:'Piece that jumps? (knight/bishop)',a:'knight',hint:'L-shape.',tier:1},{q:'Most valuable piece?',a:'king',hint:'If captured, game over.',tier:1},
+{q:'Pieces per player at start?',a:'16',hint:'8 pawns + 8 others.',tier:2},{q:'Which color moves first?',a:'white',hint:'Traditional rule.',tier:2},{q:'Can a bishop move diagonally? (yes/no)',a:'yes',hint:'Only diagonally.',tier:2},
+{q:'What is the term for attacking the king?',a:'check',hint:'4 letters.',tier:3},{q:'What is the special move with king and rook?',a:'castle',hint:'Also a building.',tier:3}
+]
+};
+
+function pickQuestion(subject,tier,usedIdx){
+var pool=COMBAT_Q[subject]||COMBAT_Q.mathematics;
+var candidates=[];
+for(var i=0;i<pool.length;i++){if(usedIdx.indexOf(i)>=0)continue;if(pool[i].tier===tier)candidates.push(i);}
+if(candidates.length===0)for(var i=0;i<pool.length;i++){if(usedIdx.indexOf(i)>=0)continue;candidates.push(i);}
+if(candidates.length===0){usedIdx.length=0;for(var i=0;i<pool.length;i++){if(pool[i].tier===tier)candidates.push(i);}if(candidates.length===0)for(var i=0;i<pool.length;i++)candidates.push(i);}
+var idx=candidates[Math.floor(Math.random()*candidates.length)];
+usedIdx.push(idx);
+return pool[idx];
+}
+
+function startCombat(enemy){
+if(enemy.hp<=0)return;
+if(state.enemiesDefeated[enemy.id]){toast('⚔️ '+enemy.name+' already defeated');return;}
+combatState={enemy:enemy,playerHp:state.player.hp,playerMaxHp:state.player.maxHp,enemyHp:enemy.hp,enemyMaxHp:enemy.maxHp,combo:0,used:[]};
+enemy.phase=1;
+cs_playerLunge=0;cs_enemyShake=0;cs_playerHurtFlash=0;cs_enemyHurtFlash=0;
+document.getElementById('combat-title').textContent='⚔️ COMBAT: '+enemy.name+(enemy.tier===3?' 👑':'');
+document.getElementById('combat-enemy-name').textContent=enemy.name+(enemy.tier===3?' 👑':'');
+nextCombatQ();updateCombatUi();
+document.getElementById('combat').classList.remove('hidden');
+setTimeout(function(){document.getElementById('combat-input').focus();},150);
+}
+function nextCombatQ(){
+var tier=combatState.enemy.tier||1;
+if(combatState.enemy.phase===2)tier=Math.min(3,tier+1);
+var q=pickQuestion(combatState.enemy.subject,tier,combatState.used);
+combatState.question=q;
+document.getElementById('combat-question').textContent=q.q;
+document.getElementById('combat-input').value='';
+document.getElementById('combat-feedback').className='modal-feedback hidden';
+setTimeout(function(){document.getElementById('combat-input').focus();},100);
+}
+function updateCombatUi(){
+var c=combatState;
+document.getElementById('combat-enemy-hp').textContent='HP '+Math.max(0,c.enemyHp)+'/'+c.enemyMaxHp;
+document.getElementById('combat-enemy-fill').style.width=Math.max(0,(c.enemyHp/c.enemyMaxHp*100))+'%';
+document.getElementById('combat-player-hp').textContent='HP '+c.playerHp+'/'+c.playerMaxHp;
+document.getElementById('combat-player-fill').style.width=(c.playerHp/c.playerMaxHp*100)+'%';
+var comboEl=document.getElementById('combat-combo');
+if(c.combo>=2){comboEl.innerHTML='<span class="combo-tag">🔥 '+c.combo+'x COMBO</span>';}else comboEl.innerHTML='';
+}
+function triggerBossPhase(){
+if(!combatState)return;
+combatState.enemy.phase=2;
+sfxBoss();addShake(20);flashScreen();
+unlockAchievement('boss_phase');
+toast('👑 '+combatState.enemy.name+' enters PHASE 2!');
+companionSay(['Watch out!','It\'s stronger!','Careful!']);
+document.getElementById('combat-title').innerHTML='⚔️ COMBAT: '+combatState.enemy.name+' <span style="color:#FFD700">👑 PHASE 2</span>';
+}
+function endCombat(won,fled){
+if(won){
+var e=combatState.enemy;
+toast('⚔️ Victory! +'+e.xp+' XP');
+addXp(e.xp);addShards(Math.floor(e.xp/3));
+state.player.hp=combatState.playerHp;
+state.enemiesDefeated[e.id]=true;e.hp=0;
+var idx=enemies.indexOf(e);if(idx>=0)enemies.splice(idx,1);
+burstParticles(e.x,e.y,25,'#EF5C11');burstParticles(e.x,e.y,15,'#FFD700');
+checkBountyProgress('battle',1);
+if(e.tier>=2)checkBountyProgress('battle',1,'boss');
+unlockAchievement('first_blood');
+if(e.tier>=3){
+unlockAchievement('boss_slayer');
+var allTier3=['geometry_titan','syntax_serpent','memory_keeper','cartographer_ghost','photosynthesis_beast','memory_leak','queen_shadow'];
+var remaining=allTier3.filter(function(id){return !state.enemiesDefeated[id];});
+if(remaining.length===0)unlockAchievement('all_tier3');
+}
+if(combatState.combo>=5)unlockAchievement('combo_5');
+if(combatState.combo>state.comboBest)state.comboBest=combatState.combo;
+sfxLevel();addShake(10);flashScreen();
+companionSay(['Victory!','We did it!','Well fought!']);
+} else if(fled){
+toast('You fled the battle');sfxMiss();
+} else {
+toast('You were defeated... returning to the monument');
+state.player.hp=Math.floor(state.player.maxHp/2);
+state.player.x=0;state.player.y=120;sfxMiss();addShake(20);
+companionSay(['Are you okay?','Rest up.','We\'ll try again.']);
+}
+combatState=null;updateHud();closePanel('combat');blurAll();save();
+}
+
+// ===== SKILLS =====
+function renderSkillTree(){
+var el=document.getElementById('skill-content');
+document.getElementById('skill-points').textContent=state.player.skillPoints;
+var html='';
+Object.keys(SKILLS).forEach(function(branch){
+html+='<div class="skill-branch"><div class="skill-branch-title">'+branch.toUpperCase()+'</div><div class="skill-row">';
+SKILLS[branch].forEach(function(sk){
+var has=state.skills.indexOf(sk.id)>=0;
+var cls=has?'unlocked':(state.player.skillPoints>0?'':'locked');
+html+='<div class="skill-node '+cls+'" data-skill="'+sk.id+'"><div class="skill-node-name">'+sk.name+'</div><div class="skill-node-desc">'+sk.desc+'</div></div>';
+});
+html+='</div></div>';
+});
+el.innerHTML=html;
+var nodes=el.querySelectorAll('.skill-node');
+for(var i=0;i<nodes.length;i++){(function(n){n.onclick=function(){unlockSkill(n.getAttribute('data-skill'));};})(nodes[i]);}
+}
+function renderMastery(){
+var el=document.getElementById('mastery-content');
+var subjects={};
+Object.keys(state.mastery).forEach(function(k){
+var subj=k.split(':')[0];
+if(!subjects[subj])subjects[subj]={sum:0,count:0};
+subjects[subj].sum+=state.mastery[k].score;subjects[subj].count++;
+});
+if(Object.keys(subjects).length===0){el.innerHTML='<div style="opacity:.5;font-size:11px">Solve puzzles to build mastery.</div>';return;}
+var html='';
+Object.keys(subjects).forEach(function(s){
+var avg=subjects[s].sum/subjects[s].count;
+html+='<div class="mastery-row"><div class="mastery-label">'+(SUBJECT_NAMES[s]||s)+'</div><div class="mastery-bar"><div class="mastery-fill" style="width:'+(avg*100)+'%"></div></div><div class="mastery-val">'+Math.round(avg*100)+'%</div></div>';
+});
+el.innerHTML=html;
+}
+function unlockSkill(id){
+if(state.skills.indexOf(id)>=0)return;
+if(state.player.skillPoints<=0){toast('No skill points available');return;}
+var branch=null;Object.keys(SKILLS).forEach(function(b){SKILLS[b].forEach(function(s){if(s.id===id)branch=b;});});
+if(!branch)return;
+var arr=SKILLS[branch],idx=-1;
+for(var i=0;i<arr.length;i++)if(arr[i].id===id)idx=i;
+if(idx>0&&state.skills.indexOf(arr[idx-1].id)<0){toast('Unlock the previous skill first');return;}
+state.skills.push(id);state.player.skillPoints--;
+unlockAchievement('skill_invested');
+if(id==='exp_2'){state.player.maxHp+=30;state.player.hp+=30;}
+toast('🌳 Skill unlocked: '+arr[idx].name);
+sfxCoin();updateHud();renderSkillTree();save();
+}
+
+function renderAchievements(){
+var el=document.getElementById('achievement-content');
+var html='';
+ACHIEVEMENTS.forEach(function(a){
+var has=state.achievements.indexOf(a.id)>=0;
+html+='<div class="achievement '+(has?'':'locked')+'"><div class="achievement-icon">'+(has?a.icon:'🔒')+'</div><div><div class="achievement-name">'+a.name+'</div><div class="achievement-desc">'+a.desc+'</div></div></div>';
+});
+el.innerHTML=html;
+}
+
+function renderPortals(){
+var list=document.getElementById('portal-list');list.innerHTML='';
+Object.keys(REGIONS).forEach(function(id){
+var r=REGIONS[id];
+var unlocked=r.unlocked||state.unlockedRegions.indexOf(id)>=0;
+var tile=document.createElement('div');
+tile.className='region-tile'+(unlocked?'':' locked');
+var enemyCount=r.enemies.length;var defeated=0;
+r.enemies.forEach(function(e){if(state.enemiesDefeated[e.id])defeated++;});
+var progress=enemyCount>0?' · '+defeated+'/'+enemyCount+' foes':'';
+tile.innerHTML='<div class="region-tile-name">'+(unlocked?'🌀':'🔒')+' '+r.name+'</div><div class="region-tile-desc">'+r.sub+progress+'</div><div class="region-tile-subject">'+r.subject+'</div>';
+if(unlocked)tile.onclick=function(){closePanel('portals');enterRegion(id);};
+list.appendChild(tile);
+});
+}
+
+function renderSettings(){
+var ts=document.getElementById('toggle-sound'),tm=document.getElementById('toggle-music'),tmm=document.getElementById('toggle-minimap');
+ts.classList.toggle('on',state.settings.sound);
+tm.classList.toggle('on',state.settings.music);
+tmm.classList.toggle('on',state.settings.minimap);
+var mins=Math.floor((state.playtime||0)/60);
+document.getElementById('playtime').textContent=mins+'m';
+var totalCoins=0;Object.keys(state.coins||{}).forEach(function(k){totalCoins+=state.coins[k].length;});
+var totalChests=0;Object.keys(state.chests||{}).forEach(function(k){totalChests+=state.chests[k].length;});
+document.getElementById('coin-count').textContent=totalCoins;
+document.getElementById('chest-count').textContent=totalChests;
+}
+
+function trackAttempt(subject,topic,correct,difficulty){
+var key=subject+':'+topic;
+if(!state.mastery[key])state.mastery[key]={attempts:0,correct:0,score:0.5};
+var m=state.mastery[key];m.attempts++;if(correct)m.correct++;
+var pK=0.9,pU=0.25,prior=m.score;
+var pC=prior*pK+(1-prior)*pU;
+var post=correct?(pK*prior)/pC:((1-pK)*prior)/(1-pC);
+m.score=prior+(post-prior)*Math.min(1,difficulty/5);
+save();
+}
+
+// ===== WIRE UP =====
+document.querySelectorAll('[data-close]').forEach(function(b){b.onclick=function(){closePanel(b.getAttribute('data-close'));blurAll();};});
+document.querySelectorAll('.modal-box').forEach(function(m){m.addEventListener('click',function(e){e.stopPropagation();});});
+['puzzle','combat','portals','skilltree','achievements','settings','bounties'].forEach(function(id){
+var el=document.getElementById(id);
+if(el)el.addEventListener('click',function(e){if(e.target===el){closePanel(id);blurAll();}});
+});
+document.getElementById('journal-close').onclick=function(){toggleJournal();blurAll();};
+
+document.getElementById('btn-begin').onclick=function(){
+renderClassGrid();renderColorPickers();showScreen('screen-creation');
+setTimeout(function(){var el=document.getElementById('char-name');if(el){el.value='';el.focus();}},250);
+};
+document.getElementById('continue-btn').onclick=function(){
+if(loadSave()){
+state.unlockedRegions.forEach(function(r){if(REGIONS[r])REGIONS[r].unlocked=true;});
+ensureBounties();
+showScreen(null);enterRegion(state.player.region);
+if(state.player.name)toast('Welcome back, '+state.player.name+'!');
+}
+};
+document.getElementById('btn-back').onclick=function(){showScreen('screen-title');};
+document.getElementById('btn-confirm').onclick=function(){
+var raw=document.getElementById('char-name').value||'';
+var name=raw.trim().slice(0,20);
+if(!name){toast('Please type a name first.');document.getElementById('char-name').focus();return;}
+state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+state.player.name=name;state.player.skin=newChar.skin;state.player.hair=newChar.hair;
+state.player.outfit=newChar.outfit;state.player.class=newChar.class;
+ensureBounties();
+save();showScreen(null);unlockAchievement('first_steps');enterRegion('academy');
+toast('Welcome, '+name+'!');
+};
+document.getElementById('btn-journal').onclick=function(){toggleJournal();};
+document.getElementById('btn-portals').onclick=function(){togglePanel('portals');};
+document.getElementById('btn-skills').onclick=function(){togglePanel('skilltree');};
+document.getElementById('btn-achievements').onclick=function(){togglePanel('achievements');};
+document.getElementById('btn-settings').onclick=function(){togglePanel('settings');};
+document.getElementById('btn-bounties').onclick=function(){togglePanel('bounties');};
+
+document.getElementById('toggle-sound').onclick=function(){
+state.settings.sound=!state.settings.sound;save();renderSettings();
+if(state.settings.sound)sfxCoin();
+};
+document.getElementById('toggle-music').onclick=function(){
+state.settings.music=!state.settings.music;save();renderSettings();
+if(state.settings.music){startMusic(state.player.region);}else{stopMusic();}
+};
+document.getElementById('toggle-minimap').onclick=function(){
+state.settings.minimap=!state.settings.minimap;save();renderSettings();
+document.getElementById('minimap').classList.toggle('show',state.settings.minimap&&!document.getElementById('hud').classList.contains('hidden'));
+};
+document.getElementById('btn-reset').onclick=function(){
+if(confirm('Reset ALL progress? This cannot be undone.')){
+localStorage.removeItem(SAVE_KEY);
+state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+stopMusic();closeAllPanels();showScreen('screen-title');
+document.getElementById('continue-btn').classList.add('hidden');
+}
+};
+
+document.getElementById('puzzle-submit').onclick=function(){
+if(!currentPuzzle)return;
+var p=PUZZLES[currentPuzzle];
+var a=document.getElementById('puzzle-input').value;
+var fb=document.getElementById('puzzle-feedback');
+if(p.validator(a)){
+fb.className='modal-feedback correct';fb.textContent='✓ '+p.explanation;
+addXp(p.xp);addShards(p.shards);
+trackAttempt(p.subject,p.topic,true,5);
+checkBountyProgress('solve',1,p.subject);
+unlockAchievement('first_puzzle');
+var solved={};Object.keys(state.mastery).forEach(function(k){if(state.mastery[k].correct>0)solved[k.split(':')[0]]=true;});
+if(Object.keys(solved).length>=3)unlockAchievement('polyglot');
+burstParticles(state.player.x,state.player.y,15,'#FFD700');
+sfxQuest();companionSay(['Nice!','You got it!','Brainy!']);
+if(p.onComplete)p.onComplete();
+updateQuestTracker();
+setTimeout(function(){closePanel('puzzle');blurAll();},2200);
+} else {
+fb.className='modal-feedback wrong';fb.textContent='Not quite. Try again — or use a hint.';
+trackAttempt(p.subject,p.topic,false,5);sfxMiss();
+}
+};
+document.getElementById('puzzle-hint').onclick=function(){
+if(!currentPuzzle)return;
+var p=PUZZLES[currentPuzzle];
+var fb=document.getElementById('puzzle-feedback');
+fb.className='modal-feedback info';fb.textContent='💡 '+p.hint;
+playTone(660,0.08,'sine',0.06);
+};
+document.getElementById('puzzle-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('puzzle-submit').click();}});
+
+document.getElementById('combat-submit').onclick=function(){
+if(!combatState)return;
+var input=document.getElementById('combat-input').value.trim().toLowerCase();
+var expected=combatState.question.a.toLowerCase();
+var fb=document.getElementById('combat-feedback');
+var correct=input===expected||input.replace(/\s/g,'')===expected.replace(/\s/g,'');
+if(correct){
+combatState.combo++;
+var baseDmg=10+state.player.level*2;
+if(state.skills.indexOf('com_1')>=0)baseDmg+=3;
+var comboMult=1+Math.min(combatState.combo-1,5)*0.15;
+if(state.skills.indexOf('com_3')>=0&&combatState.combo>1)comboMult*=1.5;
+var damage=Math.round(baseDmg*comboMult);
+combatState.enemyHp-=damage;
+cs_playerLunge=1;cs_enemyHurtFlash=1;cs_enemyShake=1;
+fb.className='modal-feedback correct';
+fb.textContent='✓ Correct! You deal '+damage+' damage.'+(combatState.combo>1?' (Combo '+combatState.combo+'x)':'');
+addXp(25+combatState.combo*5);
+if(combatState.combo>=3)sfxCrit(); else sfxHit();
+addFloatText(combatState.enemy.x,combatState.enemy.y,'-'+damage,combatState.combo>=3?'#FFD700':'#4CAF50',combatState.combo>=3?22:18);
+burstParticles(combatState.enemy.x,combatState.enemy.y,8,combatState.combo>=3?'#FFD700':'#4CAF50');
+addShake(combatState.combo>=3?6:3);
+// Boss phase trigger at 50%
+if(combatState.enemy.tier>=2&&combatState.enemy.phase===1&&combatState.enemyHp<=combatState.enemyMaxHp*0.5&&combatState.enemyHp>0){
+triggerBossPhase();
+}
+if(combatState.enemyHp<=0){setTimeout(function(){endCombat(true);},1200);return;}
+setTimeout(function(){
+if(!combatState)return;
+var counterDmg=Math.max(2,Math.round((6+combatState.enemy.tier*3)*(state.skills.indexOf('com_2')>=0?0.7:1)));
+if(combatState.enemy.phase===2)counterDmg=Math.round(counterDmg*1.4);
+combatState.playerHp-=counterDmg;
+cs_playerHurtFlash=1;
+addFloatText(state.player.x,state.player.y,'-'+counterDmg,'#F44336');
+addShake(4);updateCombatUi();
+if(combatState.playerHp<=0){setTimeout(function(){endCombat(false);},800);}
+},700);
+} else {
+combatState.combo=0;
+var dmg=Math.max(2,Math.round((10+combatState.enemy.tier*5)*(state.skills.indexOf('com_2')>=0?0.7:1)));
+if(combatState.enemy.phase===2)dmg=Math.round(dmg*1.3);
+combatState.playerHp-=dmg;
+cs_playerHurtFlash=1;
+fb.className='modal-feedback wrong';
+fb.textContent='✗ Incorrect. '+combatState.question.hint+' Enemy strikes for '+dmg+'.';
+sfxMiss();
+addFloatText(state.player.x,state.player.y,'-'+dmg,'#F44336');
+addShake(6);
+if(combatState.playerHp<=0){setTimeout(function(){endCombat(false);},1200);return;}
+}
+updateCombatUi();
+setTimeout(function(){if(combatState)nextCombatQ();},1700);
+};
+document.getElementById('combat-flee').onclick=function(){endCombat(false,true);};
+document.getElementById('combat-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('combat-submit').click();}});
+
+// ===== INTRO =====
+var introCards=[
+{title:'The Great Forgetting',text:'Long ago, Aetheria thrived on knowledge. Great crystals powered entire cities. Libraries held the sum of all human understanding.'},
+{title:'A World Unraveling',text:'But a mysterious phenomenon — The Great Forgetting — has drained the crystals. Regions have gone silent. Machines have stopped. The world is forgetting itself.'},
+{title:'Your Calling',text:'You have been summoned to the Academy of Legends. Every concept you master will restore a fragment of Aetheria. Your journey begins now.'}
+];
+var introIdx=0;
+function showIntro(){
+introIdx=0;
+document.getElementById('intro').classList.remove('hidden');
+renderIntroCard();
+}
+function renderIntroCard(){
+var c=introCards[introIdx];
+document.getElementById('intro-title').textContent=c.title;
+document.getElementById('intro-text').textContent=c.text;
+var dots=document.querySelectorAll('.intro-dot');
+for(var i=0;i<dots.length;i++)dots[i].classList.toggle('active',i===introIdx);
+document.getElementById('intro-next').textContent=introIdx<introCards.length-1?'Continue':'Begin Your Journey';
+}
+document.getElementById('intro-next').onclick=function(){
+introIdx++;
+if(introIdx>=introCards.length){
+state.hasSeenIntro=true;save();
+closePanel('intro');
+document.getElementById('screen-title').classList.remove('hidden');
+} else {
+renderIntroCard();
+}
+};
+
+document.getElementById('companion-confirm').onclick=function(){confirmCompanionName();};
+document.getElementById('companion-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();confirmCompanionName();}});
+
+// ===== BOOT =====
+initCanvas();initInput();requestAnimationFrame(loop);updateHud();
+var hasSave=loadSave();
+if(hasSave){ensureBounties();document.getElementById('continue-btn').classList.remove('hidden');}
+if(!state.hasSeenIntro){
+showIntro();
+document.getElementById('screen-title').classList.add('hidden');
+}
+renderClassGrid();renderColorPickers();
+document.getElementById('hud').classList.add('hidden');
+
+})();
+</script>
+</body>
+</html>
