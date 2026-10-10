@@ -287,7 +287,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;o
 
 <div id="intro" class="hidden"><div class="intro-card">
 <h2 id="intro-title">The Great Forgetting</h2>
-<p id="intro-text">Long ago, Aetheria thrived on knowledge. Great crystals powered entire cities. Libraries held the sum of all human understanding.</p>
+<p id="intro-text">Long ago, Aetheria thrived on knowledge.</p>
 <div class="intro-dots"><div class="intro-dot active"></div><div class="intro-dot"></div><div class="intro-dot"></div></div>
 <div style="margin-top:24px"><button class="btn" id="intro-next">Continue</button></div>
 </div></div>
@@ -450,7 +450,6 @@ var DEFAULT_STATE={
 player:{name:'',class:'Arcanist',skin:0xf0c8a0,hair:0x2a1810,outfit:0x6a4cff,level:1,xp:0,shards:0,skillPoints:0,hp:100,maxHp:100,region:'academy',x:0,y:120,facing:'down'},
 quests:{},mastery:{},unlockedRegions:['academy'],skills:[],achievements:[],inventory:{},
 seenNPCs:[],enemiesDefeated:{},coins:{},chests:{},hasCompanion:false,companionName:'',
-companionPersonality:'curious',
 settings:{sound:true,music:true,minimap:true},
 playtime:0,comboBest:0,hasSeenRain:false,hasSeenIntro:false,
 bounties:{date:'',list:[],progress:{},completed:false}
@@ -467,6 +466,26 @@ state.coins=state.coins||{};state.chests=state.chests||{};
 state.bounties=state.bounties||{date:'',list:[],progress:{},completed:false};
 return true;}
 }catch(e){}
+return false;
+}
+
+// ===== FIX: Answer matcher =====
+function matchAnswer(input,expected){
+var norm=function(s){
+return String(s).toLowerCase()
+.replace(/\s+/g,'')
+.replace(/^x=/i,'')
+.replace(/^=\s*/,'')
+.replace(/\*\*/g,'^')
+.replace(/[×✕]/g,'*')
+.replace(/[÷]/g,'/')
+.replace(/[−–—]/g,'-');
+};
+var a=norm(input),b=norm(expected);
+if(a===b)return true;
+var na=parseFloat(a),nb=parseFloat(b);
+if(!isNaN(na)&&!isNaN(nb)&&Math.abs(na-nb)<1e-6)return true;
+if(isNaN(na)&&isNaN(nb))return a===b;
 return false;
 }
 
@@ -494,38 +513,28 @@ function sfxDialogue(){playTone(660,0.05,'sine',0.04);}
 function sfxInteract(){playTone(440,0.06,'triangle',0.06);}
 function sfxBoss(){[130,98,82,65].forEach(function(f,i){setTimeout(function(){playTone(f,0.35,'sawtooth',0.15);},i*120);});}
 
-// ===== AMBIENT MUSIC =====
-var musicTimer=null,musicIdx=0,musicRegion=null,musicNotes=[];
+// ===== MUSIC =====
+var musicTimer=null,musicRegion=null,musicNotes=[];
 function startMusic(region){
 if(!state.settings.music){stopMusic();return;}
 if(musicRegion===region&&musicTimer)return;
 stopMusic();
 musicRegion=region;
 musicNotes=MUSIC_SCALES[region]||MUSIC_SCALES.academy;
-musicIdx=0;
 musicTimer=setInterval(function(){
-if(!state.settings.music||!audioCtx)return;
+if(!state.settings.music)return;
 var scale=musicNotes;
 var note=scale[Math.floor(Math.random()*scale.length)];
 playTone(note,1.8,'sine',0.035);
-if(Math.random()<0.3){
-setTimeout(function(){
-var n2=scale[Math.floor(Math.random()*scale.length)]/2;
-playTone(n2,2.4,'triangle',0.025);
-},400);
-}
+if(Math.random()<0.3)setTimeout(function(){var n2=scale[Math.floor(Math.random()*scale.length)]/2;playTone(n2,2.4,'triangle',0.025);},400);
 },2400);
 }
-function stopMusic(){
-if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
-musicRegion=null;
-}
+function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}musicRegion=null;}
 
 var shake=0;
 function addShake(amt){shake=Math.max(shake,amt);}
 function flashScreen(){var f=document.getElementById('flash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},200);}
 
-// ===== XP =====
 function xpForLevel(l){return l<=1?0:Math.round(100*Math.pow(l-1,1.6));}
 function xpMult(){var m=1;
 if(state.skills.indexOf('gen_1')>=0)m+=.05;
@@ -560,11 +569,10 @@ if(!a)return;
 state.achievements.push(id);
 toast('🏆 '+a.name,true);
 playTone(880,0.12,'sine',0.1);setTimeout(function(){playTone(1175,0.18,'sine',0.1);},120);
-companionSay([ 'Impressive!', 'Well done!', 'A new badge!' ]);
+companionSay(['Impressive!','Well done!','A new badge!']);
 save();
 }
 
-// ===== HUD =====
 function updateHud(){
 var p=state.player;
 document.getElementById('hud-name').textContent=p.name||'Scholar';
@@ -627,7 +635,7 @@ for(var i=0;i<order.length;i++){
 var q=state.quests[order[i]];
 if(q&&q.status!=='completed'){active={id:order[i],q:q};break;}
 }
-if(!active){el.innerHTML='<div style="opacity:.6">Explore and talk to NPCs to find quests.</div>';tracker.classList.add('show');return;}
+if(!active){el.innerHTML='<div style="opacity:.6">Explore and talk to NPCs.</div>';tracker.classList.add('show');return;}
 var meta=QUEST_META[active.id];
 if(!meta){el.innerHTML='<div style="opacity:.6">Explore.</div>';tracker.classList.add('show');return;}
 var html='<div class="qname">'+meta.name+'</div>';
@@ -638,15 +646,8 @@ html+='<div class="obj '+(done?'done':'')+'">'+o.label+'</div>';
 el.innerHTML=html;tracker.classList.add('show');
 }
 
-// ===== BOUNTIES =====
-function todayStr(){
-var d=new Date();
-return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
-}
-function seedRandom(seed){
-var x=Math.sin(seed)*10000;
-return x-Math.floor(x);
-}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function seedRandom(seed){var x=Math.sin(seed)*10000;return x-Math.floor(x);}
 function ensureBounties(){
 var today=todayStr();
 if(state.bounties.date===today&&state.bounties.list.length>0)return;
@@ -665,12 +666,12 @@ function checkBountyProgress(type,amount,subject){
 if(!state.bounties||!state.bounties.list)return;
 var changed=false;
 state.bounties.list.forEach(function(b){
-if(state.bounties.progress[b.id]>=b.count)return;
 if(state.bounties.completed)return;
+if((state.bounties.progress[b.id]||0)>=b.count)return;
 var matches=false;
 if(b.type===type){
 if(b.type==='solve'&&subject&&b.subject===subject)matches=true;
-else if(b.type!==solve_check(b.type))matches=true;
+else if(b.type!=='solve')matches=true;
 }
 if(b.type==='boss'&&type==='battle'&&subject==='boss')matches=true;
 if(matches){
@@ -690,7 +691,6 @@ unlockAchievement('bounty_all');
 }
 if(changed)save();
 }
-function solve_check(t){return t;}
 function renderBounties(){
 var el=document.getElementById('bounty-list');
 var html='';
@@ -706,7 +706,6 @@ if(state.bounties.completed)html+='<div style="text-align:center;margin-top:16px
 el.innerHTML=html;
 }
 
-// ===== CHARACTER =====
 var newChar={skin:0xf0c8a0,hair:0x2a1810,outfit:0x6a4cff,class:'Arcanist'};
 function renderClassGrid(){
 var g=document.getElementById('class-grid');g.innerHTML='';
@@ -734,7 +733,6 @@ mk(document.getElementById('hair-picker'),HAIR_COLORS,'hair',newChar.hair);
 mk(document.getElementById('outfit-picker'),OUTFIT_COLORS,'outfit',newChar.outfit);
 }
 
-// ===== CANVAS =====
 var canvas,ctx,pcanvas,pctx,W,H;
 var keys={},moveVec={x:0,y:0},cam={x:0,y:0},walkPhase=0,facing='down';
 var interactables=[],currentInteractable=null,enemies=[],npcs=[],buildings=[],decor=[],coins=[],chests=[];
@@ -797,7 +795,7 @@ ctx.fillStyle='#fff';ctx.fillText(name,p.x,p.y-46);
 }
 }
 
-function drawEnemySprite(cxt,px,py,e,scale,hpPct){
+function drawEnemySprite(cxt,px,py,e){
 var bob=Math.sin(Date.now()/300+e.x)*4;
 var t=e.type||'sprite';
 if(t==='sprite'){
@@ -836,11 +834,7 @@ cxt.beginPath();cxt.arc(px,py+2+bob,8,0,Math.PI);cxt.fill();
 cxt.fillStyle='#fff';for(var i=0;i<4;i++){cxt.fillRect(px-6+i*4,py-3+bob,2,4);}
 } else if(t==='serpent'){
 cxt.fillStyle=e.color;var segs=6;
-for(var i=0;i<segs;i++){
-var sx=px+Math.sin(Date.now()/250+i*0.7)*12;
-var sy=py-24+bob+i*6;
-cxt.beginPath();cxt.arc(sx,sy,10-i*0.8,0,Math.PI*2);cxt.fill();
-}
+for(var i=0;i<segs;i++){var sx=px+Math.sin(Date.now()/250+i*0.7)*12;var sy=py-24+bob+i*6;cxt.beginPath();cxt.arc(sx,sy,10-i*0.8,0,Math.PI*2);cxt.fill();}
 cxt.fillStyle='#111';cxt.beginPath();cxt.arc(px-4,py-26+bob,2,0,Math.PI*2);cxt.arc(px+4,py-26+bob,2,0,Math.PI*2);cxt.fill();
 cxt.fillStyle='#ff0000';cxt.beginPath();cxt.moveTo(px,py-18+bob);cxt.lineTo(px-3,py-14+bob);cxt.lineTo(px+3,py-14+bob);cxt.closePath();cxt.fill();
 } else if(t==='overlord'){
@@ -863,7 +857,7 @@ var p=worldToScreen(e.x,e.y);
 var hpPct=e.hp/e.maxHp;
 ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(p.x,p.y+24,22,8,0,0,Math.PI*2);ctx.fill();
 if(e.phase===2){ctx.fillStyle='rgba(255,0,0,0.15)';ctx.beginPath();ctx.arc(p.x,p.y-10,40,0,Math.PI*2);ctx.fill();}
-drawEnemySprite(ctx,p.x,p.y,e,1,hpPct);
+drawEnemySprite(ctx,p.x,p.y,e);
 ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(p.x-26,p.y-52,52,7);
 ctx.fillStyle=hpPct>0.5?'#4CAF50':hpPct>0.25?'#FFC107':'#F44336';
 ctx.fillRect(p.x-26,p.y-52,52*hpPct,7);
@@ -978,22 +972,21 @@ ctx.beginPath();ctx.moveTo(p.x+9,p.y-6+bob);ctx.lineTo(p.x+5,p.y-12+bob);ctx.lin
 ctx.fillStyle='#111';ctx.beginPath();ctx.arc(p.x-3,p.y-1+bob,1.5,0,Math.PI*2);ctx.arc(p.x+3,p.y-1+bob,1.5,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#f0a020';ctx.lineWidth=3;
 ctx.beginPath();ctx.moveTo(p.x+9,p.y+bob);ctx.quadraticCurveTo(p.x+18,p.y-4+bob+Math.sin(Date.now()/200)*3,p.x+14,p.y-12+bob);ctx.stroke();
-// name tag
 if(state.companionName){
 ctx.font='bold 10px system-ui';ctx.textAlign='center';
 ctx.lineWidth=3;ctx.strokeStyle='#031E3D';ctx.strokeText(state.companionName,p.x,p.y-20);
 ctx.fillStyle='#FFA366';ctx.fillText(state.companionName,p.x,p.y-20);
 }
-// speech bubble
 if(companionBubble.life>0&&companionBubble.text){
 var bx=p.x+20,by=p.y-30;
-ctx.fillStyle='rgba(3,30,61,.95)';
-ctx.strokeStyle='#EF5C11';ctx.lineWidth=2;
+ctx.font='11px system-ui';
+var tw=ctx.measureText(companionBubble.text).width;
+ctx.fillStyle='rgba(3,30,61,.95)';ctx.strokeStyle='#EF5C11';ctx.lineWidth=2;
 ctx.beginPath();
-ctx.roundRect?ctx.roundRect(bx-4,by-14,ctx.measureText(companionBubble.text).width+40,20,4):ctx.rect(bx-4,by-14,120,20);
+if(ctx.roundRect)ctx.roundRect(bx-4,by-14,tw+16,20,4);
+else ctx.rect(bx-4,by-14,tw+16,20);
 ctx.fill();ctx.stroke();
-ctx.font='11px system-ui';ctx.textAlign='left';
-ctx.fillStyle='#fff';ctx.fillText(companionBubble.text,bx+4,by);
+ctx.textAlign='left';ctx.fillStyle='#fff';ctx.fillText(companionBubble.text,bx+4,by);
 }
 }
 
@@ -1034,7 +1027,6 @@ if(weather.type==='rain'){pctx.globalAlpha=0.5;pctx.strokeStyle='#aaccee';pctx.l
 pctx.globalAlpha=1;
 }
 
-// ===== WORLD =====
 function buildWorld(regionId){
 var r=REGIONS[regionId];if(!r)return;
 buildings=r.buildings.slice();npcs=[];enemies=[];interactables=[];decor=[];coins=[];chests=[];
@@ -1082,7 +1074,6 @@ var b=document.getElementById('region-banner');b.classList.add('show');
 setTimeout(function(){b.classList.remove('show');},2400);
 }
 
-// ===== UPDATE =====
 function update(dt){
 dayCycle+=dt*0.02;
 shake=Math.max(0,shake-dt*40);
@@ -1179,7 +1170,6 @@ var label=nearest.type==='npc'?'Talk to '+nearest.name:nearest.type==='enemy'?'F
 document.getElementById('interact-text').textContent=label;
 } else prompt.classList.add('hidden');
 
-// Arrow hint
 updateArrowHint();
 updateParticles(dt);
 }
@@ -1189,21 +1179,15 @@ var el=document.getElementById('arrow-hint');
 var w=state.quests.welcome;
 if(w&&w.status!=='completed'&&!w.objectives.talk&&state.player.region==='academy'){
 var p=worldToScreen(NPC_DATA.archivist.x,NPC_DATA.archivist.y);
-el.style.left=p.x+'px';
-el.style.top=(p.y-80)+'px';
-el.classList.remove('hidden');
+el.style.left=p.x+'px';el.style.top=(p.y-80)+'px';el.classList.remove('hidden');
 } else if(w&&w.status==='in_progress'&&!w.objectives.library&&state.player.region==='academy'){
 var p=worldToScreen(-380,-240);
-el.style.left=p.x+'px';
-el.style.top=(p.y-80)+'px';
-el.classList.remove('hidden');
-} else {
-el.classList.add('hidden');
-}
+el.style.left=p.x+'px';el.style.top=(p.y-80)+'px';el.classList.remove('hidden');
+} else el.classList.add('hidden');
 }
 
-// ===== COMBAT SCENE CANVAS =====
 var combatSceneCtx=null;
+var cs_playerLunge=0,cs_enemyShake=0,cs_playerHurtFlash=0,cs_enemyHurtFlash=0;
 function drawCombatScene(){
 if(!combatState)return;
 var sc=document.getElementById('combat-scene');
@@ -1212,43 +1196,30 @@ if(!combatSceneCtx)combatSceneCtx=sc.getContext('2d');
 var c=combatSceneCtx;
 var CW=sc.width,CH=sc.height;
 c.clearRect(0,0,CW,CH);
-// Background gradient
 var bg=c.createLinearGradient(0,0,0,CH);
 bg.addColorStop(0,'#0a1a2e');bg.addColorStop(1,'#1a2a4e');
 c.fillStyle=bg;c.fillRect(0,0,CW,CH);
-// Ground line
 c.fillStyle='rgba(0,0,0,0.4)';c.fillRect(0,CH-30,CW,30);
 c.fillStyle='rgba(239,92,17,0.3)';c.fillRect(0,CH-30,CW,2);
 
 var t=Date.now()/300;
-// Player sprite (left)
 var px=100-cs_playerLunge*40;
 var py=CH-60;
-if(cs_playerHurtFlash>0&&Math.floor(t*10)%2===0){c.globalAlpha=0.5;}
+if(cs_playerHurtFlash>0&&Math.floor(t*10)%2===0)c.globalAlpha=0.5;
 drawCombatPlayer(c,px,py,state.player,cs_playerLunge>0.1);
 c.globalAlpha=1;
 
-// Enemy sprite (right)
 var ex=CW-100+cs_enemyShake*(Math.random()-0.5)*20;
 var ey=CH-60;
-if(cs_enemyHurtFlash>0&&Math.floor(t*10)%2===0){c.globalAlpha=0.5;}
+if(cs_enemyHurtFlash>0&&Math.floor(t*10)%2===0)c.globalAlpha=0.5;
 var scale=combatState.enemy.phase===2?1.25:1;
 c.save();c.translate(ex,ey);c.scale(scale,scale);
-drawEnemySprite(c,0,0,{x:0,y:0,color:combatState.enemy.color,type:combatState.enemy.type},1,combatState.enemyHp/combatState.enemyMaxHp);
+drawEnemySprite(c,0,0,{x:0,y:0,color:combatState.enemy.color,type:combatState.enemy.type});
 c.restore();
 c.globalAlpha=1;
 
-// Attack flash
-if(cs_playerLunge>0.5){
-c.fillStyle='rgba(255,255,100,'+(cs_playerLunge-0.5)+')';
-c.fillRect(0,0,CW,CH);
-}
-if(cs_enemyHurtFlash>0.5){
-c.fillStyle='rgba(255,0,0,'+(cs_enemyHurtFlash-0.5)*0.6+')';
-c.fillRect(0,0,CW,CH);
-}
-
-// Boss phase banner
+if(cs_playerLunge>0.5){c.fillStyle='rgba(255,255,100,'+(cs_playerLunge-0.5)+')';c.fillRect(0,0,CW,CH);}
+if(cs_enemyHurtFlash>0.5){c.fillStyle='rgba(255,0,0,'+(cs_enemyHurtFlash-0.5)*0.6+')';c.fillRect(0,0,CW,CH);}
 if(combatState.enemy.phase===2){
 c.fillStyle='rgba(255,0,0,0.15)';c.fillRect(0,0,CW,CH);
 c.font='bold 14px system-ui';c.fillStyle='#FFD700';c.textAlign='center';
@@ -1256,7 +1227,6 @@ c.fillText('👑 PHASE 2',CW/2,20);
 }
 }
 function drawCombatPlayer(c,x,y,char,lunging){
-// Simplified player in combat
 c.fillStyle='#3a2510';
 c.beginPath();c.ellipse(x-8,y+14,6,5,0,0,Math.PI*2);c.fill();
 c.beginPath();c.ellipse(x+8,y+14,6,5,0,0,Math.PI*2);c.fill();
@@ -1267,18 +1237,11 @@ c.fillStyle='#FFD700';c.fillRect(x-3,y-2,6,4);
 c.fillStyle=hex(char.skin);
 c.beginPath();c.ellipse(x-17,y-8,5,11,0,0,Math.PI*2);c.fill();
 c.beginPath();c.ellipse(x+17,y-8,5,11,0,0,Math.PI*2);c.fill();
-if(lunging){
-// Sword arm extended
-c.fillStyle='#C0C0C0';
-c.fillRect(x+20,y-22,20,4);
-}
+if(lunging){c.fillStyle='#C0C0C0';c.fillRect(x+20,y-22,20,4);}
 c.beginPath();c.arc(x,y-28,12,0,Math.PI*2);c.fill();
 c.fillStyle=hex(char.hair);c.beginPath();c.arc(x,y-30,12,Math.PI,Math.PI*2);c.fill();
 c.fillStyle='#111';c.fillRect(x-5,y-29,3,4);c.fillRect(x+2,y-29,3,4);
 }
-
-// Combat animation state
-var cs_playerLunge=0,cs_enemyShake=0,cs_playerHurtFlash=0,cs_enemyHurtFlash=0;
 function tickCombatAnim(){
 cs_playerLunge=Math.max(0,cs_playerLunge-0.08);
 cs_enemyShake=Math.max(0,cs_enemyShake-0.5);
@@ -1287,7 +1250,6 @@ cs_enemyHurtFlash=Math.max(0,cs_enemyHurtFlash-0.06);
 }
 setInterval(function(){if(combatState)tickCombatAnim();},50);
 
-// ===== RENDER =====
 function render(){
 if(!ctx)return;
 var r=REGIONS[state.player.region]||REGIONS.academy;
@@ -1338,7 +1300,6 @@ var dt=Math.min((time-lastTime)/1000,0.05)||0;lastTime=time;
 update(dt);render();requestAnimationFrame(loop);
 }
 
-// ===== INPUT =====
 function isTypingTarget(el){
 if(!el)return false;
 var tag=(el.tagName||'').toUpperCase();
@@ -1385,7 +1346,6 @@ else if(currentInteractable.type==='enemy')startCombat(currentInteractable.ref);
 else if(currentInteractable.type==='portal')togglePanel('portals');
 }
 
-// ===== DIALOGUE =====
 var DIALOGUES={
 archivist:function(){
 if(!state.quests.welcome){state.quests.welcome={status:'in_progress',objectives:{talk:false,library:false}};save();}
@@ -1503,7 +1463,6 @@ if(c.next){var nd=DIALOGUES[c.next];if(nd){if(typeof nd==='function')return rend
 }
 function closeDialogue(){document.getElementById('dialogue').classList.add('hidden');blurAll();}
 
-// ===== COMPANION NAME =====
 function promptCompanionName(){
 document.getElementById('companion-name').classList.remove('hidden');
 setTimeout(function(){var el=document.getElementById('companion-input');if(el){el.value='';el.focus();}},200);
@@ -1517,7 +1476,6 @@ toast('🐾 Your companion is named '+n+'!');
 companionSay(['Hello, I\'m '+n+'!','Nice to meet you!']);
 }
 
-// ===== JOURNAL =====
 var QUEST_META={
 welcome:{name:'Welcome to the Academy',desc:'Speak with Archivist Lira and visit the Grand Library.',objectives:[{key:'talk',label:'Speak with Archivist Lira'},{key:'library',label:'Visit the Grand Library'}]},
 numeria:{name:'The Gate to Numeria',desc:'Solve two mathematical challenges.',objectives:[{key:'equation',label:'Solve the equation'},{key:'fraction',label:'Solve the fraction puzzle'}]},
@@ -1537,7 +1495,7 @@ function toggleJournal(){var j=document.getElementById('journal');j.classList.to
 function renderJournal(){
 var el=document.getElementById('journal-content');
 var entries=Object.keys(state.quests);
-if(entries.length===0){el.innerHTML='<div style="opacity:.6;font-size:13px">No active quests. Explore and talk to NPCs.</div>';return;}
+if(entries.length===0){el.innerHTML='<div style="opacity:.6;font-size:13px">No active quests.</div>';return;}
 var html='';
 var regionMap={welcome:'Academy',numeria:'Numeria',numeria_master:'Numeria',english_master:'Eloquentia',history_master:'Chronicle',geo_master:'Atlas',sci_master:'Quantum',code_master:'Binary',chess_master:'Grandmaster'};
 entries.forEach(function(id){
@@ -1562,7 +1520,6 @@ if(Math.sqrt(dx*dx+dy*dy)<180){w.objectives.library=true;w.status='completed';to
 if(state.skills.indexOf('exp_3')>=0&&state.player.hp<state.player.maxHp){state.player.hp=Math.min(state.player.maxHp,state.player.hp+1);updateHud();}
 },1000);
 
-// ===== PUZZLES =====
 var currentPuzzle=null;
 var PUZZLES={
 gate_equation:{title:'EQUATION — Gate to Numeria',question:'Solve for x:',sequence:['5x − 8 = 27'],validator:function(a){return Math.abs(parseFloat(a.replace(/\s/g,'').replace(/^x=/i,''))-7)<1e-6;},hint:'Add 8 to both sides. Then divide by 5.',explanation:'5x − 8 = 27 → 5x = 35 → x = 7.',subject:'mathematics',topic:'linear_equations',xp:80,shards:20,onComplete:function(){state.quests.numeria.objectives.equation=true;save();}},
@@ -1589,7 +1546,6 @@ document.getElementById('puzzle').classList.remove('hidden');
 setTimeout(function(){document.getElementById('puzzle-input').focus();},100);
 }
 
-// ===== COMBAT =====
 var combatState=null;
 var COMBAT_Q={
 mathematics:[
@@ -1604,28 +1560,28 @@ english:[
 ],
 science:[
 {q:'H₂O is commonly called?',a:'water',hint:'You drink it.',tier:1},{q:'Red Planet?',a:'mars',hint:'Fourth from sun.',tier:1},{q:'Force keeping us on ground?',a:'gravity',hint:'Newton.',tier:1},{q:'Gas we breathe in?',a:'oxygen',hint:'O₂.',tier:1},{q:'Closest star to Earth?',a:'sun',hint:'Rises each morning.',tier:1},{q:'Frozen water is called?',a:'ice',hint:'Solid form.',tier:1},
-{q:'Largest planet in our solar system?',a:'jupiter',hint:'Has a Great Red Spot.',tier:2},{q:'How many legs does a spider have?',a:'8',hint:'More than 6.',tier:2},{q:'Chemical symbol for gold?',a:'au',hint:'From Latin "aurum".',tier:2},{q:'What do plants produce in photosynthesis?',a:'oxygen',hint:'We breathe it.',tier:2},{q:'Chemical symbol for water?',a:'h2o',hint:'Two H, one O.',tier:2},
-{q:'What causes ocean tides?',a:'moon',hint:'Earth\'s satellite.',tier:3},{q:'Powerhouse of the cell?',a:'mitochondria',hint:'Starts with "mito".',tier:3},{q:'Speed of light unit? (symbol)',a:'c',hint:'Single letter.',tier:3},{q:'Noble gas used in balloons?',a:'helium',hint:'Lighter than air.',tier:3}
+{q:'Largest planet?',a:'jupiter',hint:'Has a Great Red Spot.',tier:2},{q:'How many legs does a spider have?',a:'8',hint:'More than 6.',tier:2},{q:'Chemical symbol for gold?',a:'au',hint:'From Latin "aurum".',tier:2},{q:'Plants produce what in photosynthesis?',a:'oxygen',hint:'We breathe it.',tier:2},{q:'Chemical symbol for water?',a:'h2o',hint:'Two H, one O.',tier:2},
+{q:'What causes ocean tides?',a:'moon',hint:'Earth\'s satellite.',tier:3},{q:'Powerhouse of the cell?',a:'mitochondria',hint:'Starts with "mito".',tier:3},{q:'Speed of light symbol?',a:'c',hint:'Single letter.',tier:3},{q:'Noble gas used in balloons?',a:'helium',hint:'Lighter than air.',tier:3}
 ],
 geography:[
-{q:'Largest ocean?',a:'pacific',hint:'Between Asia & Americas.',tier:1},{q:'How many continents?',a:'7',hint:'Africa, Asia, ...',tier:1},{q:'Longest river? (Nile/Amazon)',a:'nile',hint:'In Africa.',tier:1},{q:'Capital of France?',a:'paris',hint:'Eiffel Tower.',tier:1},{q:'Capital of Japan?',a:'tokyo',hint:'Land of the rising sun.',tier:1},{q:'Which continent is Egypt in?',a:'africa',hint:'South of Europe.',tier:1},
-{q:'Largest desert? (Sahara/Antarctica)',a:'antarctica',hint:'Cold desert.',tier:2},{q:'Which is bigger? (Asia/Africa)',a:'asia',hint:'Largest continent.',tier:2},{q:'Capital of Nigeria?',a:'abuja',hint:'Not Lagos.',tier:2},{q:'Largest country by area?',a:'russia',hint:'Across two continents.',tier:2},{q:'Capital of the USA?',a:'washington',hint:'Not New York.',tier:2},
-{q:'Amazon rainforest is in which continent?',a:'south america',hint:'Southern hemisphere.',tier:3},{q:'Longest mountain range on land?',a:'andes',hint:'In South America.',tier:3},{q:'Smallest country in the world?',a:'vatican',hint:'In Rome.',tier:3}
+{q:'Largest ocean?',a:'pacific',hint:'Between Asia & Americas.',tier:1},{q:'How many continents?',a:'7',hint:'Africa, Asia, ...',tier:1},{q:'Longest river?',a:'nile',hint:'In Africa.',tier:1},{q:'Capital of France?',a:'paris',hint:'Eiffel Tower.',tier:1},{q:'Capital of Japan?',a:'tokyo',hint:'Land of the rising sun.',tier:1},{q:'Egypt is on which continent?',a:'africa',hint:'South of Europe.',tier:1},
+{q:'Largest desert?',a:'antarctica',hint:'Cold desert.',tier:2},{q:'Which is bigger? (Asia/Africa)',a:'asia',hint:'Largest continent.',tier:2},{q:'Capital of Nigeria?',a:'abuja',hint:'Not Lagos.',tier:2},{q:'Largest country by area?',a:'russia',hint:'Across two continents.',tier:2},{q:'Capital of the USA?',a:'washington',hint:'Not New York.',tier:2},
+{q:'Amazon rainforest continent?',a:'south america',hint:'Southern hemisphere.',tier:3},{q:'Longest mountain range on land?',a:'andes',hint:'In South America.',tier:3},{q:'Smallest country in the world?',a:'vatican',hint:'In Rome.',tier:3}
 ],
 history:[
 {q:'Year WWII ended?',a:'1945',hint:'Mid-1940s.',tier:1},{q:'First US President? (last name)',a:'washington',hint:'George...',tier:1},{q:'Great Wall country?',a:'china',hint:'East Asia.',tier:1},{q:'Pyramids are in which country?',a:'egypt',hint:'Northeast Africa.',tier:1},
-{q:'Who wrote the Declaration of Independence? (last name)',a:'jefferson',hint:'Thomas...',tier:2},{q:'Which war was 1914–1918?',a:'world war 1',hint:'The first of two.',tier:2},{q:'First man on the moon? (last name)',a:'armstrong',hint:'Neil...',tier:2},
-{q:'Ancient civilization that built the Colosseum?',a:'rome',hint:'Italy\'s capital city.',tier:3},{q:'Year the Berlin Wall fell?',a:'1989',hint:'Late 1980s.',tier:3}
+{q:'Who wrote the Declaration of Independence?',a:'jefferson',hint:'Thomas...',tier:2},{q:'Which war was 1914–1918?',a:'world war 1',hint:'The first of two.',tier:2},{q:'First man on the moon?',a:'armstrong',hint:'Neil...',tier:2},
+{q:'Built the Colosseum — which ancient civilization?',a:'rome',hint:'Italy\'s capital.',tier:3},{q:'Year the Berlin Wall fell?',a:'1989',hint:'Late 1980s.',tier:3}
 ],
 coding:[
-{q:'Bits in a byte?',a:'8',hint:'Less than 10.',tier:1},{q:'HTML first word?',a:'hypertext',hint:'Markup language.',tier:1},{q:'Symbol assigns value? (x=5)',a:'=',hint:'Single character.',tier:1},{q:'Binary digit — 0 or 1? (spell)',a:'bit',hint:'Short for binary digit.',tier:1},
-{q:'What does CPU stand for? (first word)',a:'central',hint:'Brain of the computer.',tier:2},{q:'A loop that never ends is called?',a:'infinite',hint:'No end.',tier:2},{q:'Language for web styling? (3 letters)',a:'css',hint:'Cascading Style Sheets.',tier:2},
+{q:'Bits in a byte?',a:'8',hint:'Less than 10.',tier:1},{q:'HTML first word?',a:'hypertext',hint:'Markup language.',tier:1},{q:'Symbol assigns value? (x=5)',a:'=',hint:'Single character.',tier:1},{q:'Binary digit — 0 or 1?',a:'bit',hint:'Short for binary digit.',tier:1},
+{q:'What does CPU stand for? (first word)',a:'central',hint:'Brain of the computer.',tier:2},{q:'A loop that never ends?',a:'infinite',hint:'No end.',tier:2},{q:'Language for web styling? (3 letters)',a:'css',hint:'Cascading Style Sheets.',tier:2},
 {q:'True/false is what type?',a:'boolean',hint:'Named after a mathematician.',tier:3},{q:'What does a variable store?',a:'value',hint:'Can change.',tier:3}
 ],
 chess:[
-{q:'Squares on a chessboard?',a:'64',hint:'8 × 8.',tier:1},{q:'Pawns per player?',a:'8',hint:'One full rank.',tier:1},{q:'Piece that jumps? (knight/bishop)',a:'knight',hint:'L-shape.',tier:1},{q:'Most valuable piece?',a:'king',hint:'If captured, game over.',tier:1},
+{q:'Squares on a chessboard?',a:'64',hint:'8 × 8.',tier:1},{q:'Pawns per player?',a:'8',hint:'One full rank.',tier:1},{q:'Piece that jumps?',a:'knight',hint:'L-shape.',tier:1},{q:'Most valuable piece?',a:'king',hint:'If captured, game over.',tier:1},
 {q:'Pieces per player at start?',a:'16',hint:'8 pawns + 8 others.',tier:2},{q:'Which color moves first?',a:'white',hint:'Traditional rule.',tier:2},{q:'Can a bishop move diagonally? (yes/no)',a:'yes',hint:'Only diagonally.',tier:2},
-{q:'What is the term for attacking the king?',a:'check',hint:'4 letters.',tier:3},{q:'What is the special move with king and rook?',a:'castle',hint:'Also a building.',tier:3}
+{q:'Term for attacking the king?',a:'check',hint:'4 letters.',tier:3},{q:'Special move with king and rook?',a:'castle',hint:'Also a building.',tier:3}
 ]
 };
 
@@ -1706,14 +1662,13 @@ companionSay(['Victory!','We did it!','Well fought!']);
 toast('You fled the battle');sfxMiss();
 } else {
 toast('You were defeated... returning to the monument');
-state.player.hp=Math.floor(state.player.maxHp/2);
+state.player.hp=Math.max(1,Math.floor(state.player.maxHp*0.6));
 state.player.x=0;state.player.y=120;sfxMiss();addShake(20);
 companionSay(['Are you okay?','Rest up.','We\'ll try again.']);
 }
 combatState=null;updateHud();closePanel('combat');blurAll();save();
 }
 
-// ===== SKILLS =====
 function renderSkillTree(){
 var el=document.getElementById('skill-content');
 document.getElementById('skill-points').textContent=state.player.skillPoints;
@@ -1761,7 +1716,6 @@ if(id==='exp_2'){state.player.maxHp+=30;state.player.hp+=30;}
 toast('🌳 Skill unlocked: '+arr[idx].name);
 sfxCoin();updateHud();renderSkillTree();save();
 }
-
 function renderAchievements(){
 var el=document.getElementById('achievement-content');
 var html='';
@@ -1771,7 +1725,6 @@ html+='<div class="achievement '+(has?'':'locked')+'"><div class="achievement-ic
 });
 el.innerHTML=html;
 }
-
 function renderPortals(){
 var list=document.getElementById('portal-list');list.innerHTML='';
 Object.keys(REGIONS).forEach(function(id){
@@ -1787,7 +1740,6 @@ if(unlocked)tile.onclick=function(){closePanel('portals');enterRegion(id);};
 list.appendChild(tile);
 });
 }
-
 function renderSettings(){
 var ts=document.getElementById('toggle-sound'),tm=document.getElementById('toggle-music'),tmm=document.getElementById('toggle-minimap');
 ts.classList.toggle('on',state.settings.sound);
@@ -1800,7 +1752,6 @@ var totalChests=0;Object.keys(state.chests||{}).forEach(function(k){totalChests+
 document.getElementById('coin-count').textContent=totalCoins;
 document.getElementById('chest-count').textContent=totalChests;
 }
-
 function trackAttempt(subject,topic,correct,difficulty){
 var key=subject+':'+topic;
 if(!state.mastery[key])state.mastery[key]={attempts:0,correct:0,score:0.5};
@@ -1812,7 +1763,6 @@ m.score=prior+(post-prior)*Math.min(1,difficulty/5);
 save();
 }
 
-// ===== WIRE UP =====
 document.querySelectorAll('[data-close]').forEach(function(b){b.onclick=function(){closePanel(b.getAttribute('data-close'));blurAll();};});
 document.querySelectorAll('.modal-box').forEach(function(m){m.addEventListener('click',function(e){e.stopPropagation();});});
 ['puzzle','combat','portals','skilltree','achievements','settings','bounties'].forEach(function(id){
@@ -1905,12 +1855,14 @@ playTone(660,0.08,'sine',0.06);
 };
 document.getElementById('puzzle-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('puzzle-submit').click();}});
 
+// ===== FIXED: combat submit — no counter on correct answers =====
 document.getElementById('combat-submit').onclick=function(){
 if(!combatState)return;
-var input=document.getElementById('combat-input').value.trim().toLowerCase();
-var expected=combatState.question.a.toLowerCase();
+var rawInput=document.getElementById('combat-input').value;
+var expected=combatState.question.a;
 var fb=document.getElementById('combat-feedback');
-var correct=input===expected||input.replace(/\s/g,'')===expected.replace(/\s/g,'');
+var correct=matchAnswer(rawInput,expected);
+
 if(correct){
 combatState.combo++;
 var baseDmg=10+state.player.level*2;
@@ -1927,29 +1879,19 @@ if(combatState.combo>=3)sfxCrit(); else sfxHit();
 addFloatText(combatState.enemy.x,combatState.enemy.y,'-'+damage,combatState.combo>=3?'#FFD700':'#4CAF50',combatState.combo>=3?22:18);
 burstParticles(combatState.enemy.x,combatState.enemy.y,8,combatState.combo>=3?'#FFD700':'#4CAF50');
 addShake(combatState.combo>=3?6:3);
-// Boss phase trigger at 50%
 if(combatState.enemy.tier>=2&&combatState.enemy.phase===1&&combatState.enemyHp<=combatState.enemyMaxHp*0.5&&combatState.enemyHp>0){
 triggerBossPhase();
 }
 if(combatState.enemyHp<=0){setTimeout(function(){endCombat(true);},1200);return;}
-setTimeout(function(){
-if(!combatState)return;
-var counterDmg=Math.max(2,Math.round((6+combatState.enemy.tier*3)*(state.skills.indexOf('com_2')>=0?0.7:1)));
-if(combatState.enemy.phase===2)counterDmg=Math.round(counterDmg*1.4);
-combatState.playerHp-=counterDmg;
-cs_playerHurtFlash=1;
-addFloatText(state.player.x,state.player.y,'-'+counterDmg,'#F44336');
-addShake(4);updateCombatUi();
-if(combatState.playerHp<=0){setTimeout(function(){endCombat(false);},800);}
-},700);
+// NO counterattack on correct answers
 } else {
 combatState.combo=0;
 var dmg=Math.max(2,Math.round((10+combatState.enemy.tier*5)*(state.skills.indexOf('com_2')>=0?0.7:1)));
-if(combatState.enemy.phase===2)dmg=Math.round(dmg*1.3);
+if(combatState.enemy.phase===2)dmg=Math.round(dmg*1.15);
 combatState.playerHp-=dmg;
 cs_playerHurtFlash=1;
 fb.className='modal-feedback wrong';
-fb.textContent='✗ Incorrect. '+combatState.question.hint+' Enemy strikes for '+dmg+'.';
+fb.textContent='✗ Not quite. '+combatState.question.hint+' You take '+dmg+' damage.';
 sfxMiss();
 addFloatText(state.player.x,state.player.y,'-'+dmg,'#F44336');
 addShake(6);
@@ -1961,7 +1903,6 @@ setTimeout(function(){if(combatState)nextCombatQ();},1700);
 document.getElementById('combat-flee').onclick=function(){endCombat(false,true);};
 document.getElementById('combat-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('combat-submit').click();}});
 
-// ===== INTRO =====
 var introCards=[
 {title:'The Great Forgetting',text:'Long ago, Aetheria thrived on knowledge. Great crystals powered entire cities. Libraries held the sum of all human understanding.'},
 {title:'A World Unraveling',text:'But a mysterious phenomenon — The Great Forgetting — has drained the crystals. Regions have gone silent. Machines have stopped. The world is forgetting itself.'},
@@ -1991,11 +1932,9 @@ document.getElementById('screen-title').classList.remove('hidden');
 renderIntroCard();
 }
 };
-
 document.getElementById('companion-confirm').onclick=function(){confirmCompanionName();};
 document.getElementById('companion-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();confirmCompanionName();}});
 
-// ===== BOOT =====
 initCanvas();initInput();requestAnimationFrame(loop);updateHud();
 var hasSave=loadSave();
 if(hasSave){ensureBounties();document.getElementById('continue-btn').classList.remove('hidden');}
